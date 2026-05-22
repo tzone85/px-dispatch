@@ -13,7 +13,7 @@
     <header class="bg-gray-800 border-b border-gray-700 px-6 py-3 flex items-center justify-between">
         <div class="flex items-center gap-3">
             <h1 class="text-xl font-bold">PX Dashboard</h1>
-            <span class="text-sm text-gray-400" x-text="'v' + version"></span>
+            <span class="text-sm text-gray-400" x-text="version ? 'v' + version : ''"></span>
         </div>
         <div class="flex items-center gap-4 text-sm">
             <span class="text-gray-400" x-text="lastRefresh ? 'Updated: ' + lastRefresh : 'Loading...'"></span>
@@ -158,7 +158,68 @@
                     <div class="text-gray-400" x-text="line"></div>
                 </template>
             </div>
-            <div x-show="logLines.length === 0" class="text-gray-500 py-8 text-center">No log entries.</div>
+            <div x-show="logLines.length === 0" class="text-gray-500 py-8 text-center">
+                No log entries yet. Run <code class="text-gray-400">px plan</code> / <code class="text-gray-400">px resume</code> — entries appear here from <code class="text-gray-400">~/.px/logs/px.log</code>.
+            </div>
+        </div>
+
+        <!-- About Panel -->
+        <div x-show="activeTab === 6" x-cloak>
+            <template x-if="about">
+                <div class="space-y-6 max-w-4xl">
+                    <header>
+                        <h2 class="text-2xl font-bold" x-text="about.name"></h2>
+                        <p class="text-blue-300 mt-1" x-text="about.tagline"></p>
+                        <p class="text-gray-400 text-sm mt-1">
+                            Version <span class="font-mono" x-text="about.version"></span>
+                            <span x-show="about.license"> · License <span x-text="about.license"></span></span>
+                        </p>
+                    </header>
+
+                    <section>
+                        <h3 class="text-sm font-bold uppercase text-gray-400 mb-2">What it does</h3>
+                        <p class="text-gray-200 leading-relaxed" x-text="about.description"></p>
+                    </section>
+
+                    <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-sm font-bold uppercase text-gray-400 mb-2">Features</h3>
+                            <ul class="space-y-1 text-sm text-gray-200">
+                                <template x-for="feat in about.features" :key="feat">
+                                    <li class="flex items-start gap-2">
+                                        <span class="text-green-400 mt-0.5">→</span>
+                                        <span x-text="feat"></span>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold uppercase text-gray-400 mb-2">Pipeline stages</h3>
+                            <ol class="space-y-1 text-sm font-mono text-gray-200">
+                                <template x-for="(stage, i) in about.pipeline_stages" :key="stage">
+                                    <li>
+                                        <span class="text-gray-500" x-text="(i+1) + '.'"></span>
+                                        <span x-text="stage"></span>
+                                    </li>
+                                </template>
+                            </ol>
+
+                            <h3 class="text-sm font-bold uppercase text-gray-400 mt-4 mb-2">Runtimes</h3>
+                            <div class="flex flex-wrap gap-2">
+                                <template x-for="rt in about.runtimes" :key="rt">
+                                    <span class="bg-gray-700 text-gray-200 px-2 py-1 rounded text-xs font-mono" x-text="rt"></span>
+                                </template>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="border-t border-gray-700 pt-4 flex flex-wrap gap-4 text-sm">
+                        <a class="text-blue-400 hover:text-blue-300" :href="about.repo" target="_blank" rel="noreferrer">Repository</a>
+                        <a class="text-blue-400 hover:text-blue-300" :href="about.docs" target="_blank" rel="noreferrer">Architecture docs</a>
+                    </section>
+                </div>
+            </template>
+            <div x-show="!about" class="text-gray-500 py-8 text-center">Loading project information…</div>
         </div>
     </main>
 
