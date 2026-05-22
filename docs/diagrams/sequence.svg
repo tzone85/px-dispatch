@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 920" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-size="12">
+  <title>Project X — Requirement → Merged PR Sequence</title>
+  <desc>Sequence diagram covering plan, dispatch, parallel waves, pipeline (review→merge), and event emission.</desc>
+
+  <defs>
+    <marker id="msg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#38bdf8"/>
+    </marker>
+    <marker id="ret" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
+    </marker>
+    <marker id="evt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#22c55e"/>
+    </marker>
+    <style>
+      .actor   { fill:#0f172a; stroke:#475569; stroke-width:1.5; rx:6; }
+      .label   { fill:#e2e8f0; font-weight:600; }
+      .lifeline{ stroke:#334155; stroke-width:1; stroke-dasharray:4,4; }
+      .active  { fill:#1e293b; stroke:#38bdf8; stroke-width:1; }
+      .msg     { stroke:#38bdf8; stroke-width:1.5; fill:none; marker-end:url(#msg); }
+      .ret     { stroke:#94a3b8; stroke-width:1.2; stroke-dasharray:4,3; fill:none; marker-end:url(#ret); }
+      .evt     { stroke:#22c55e; stroke-width:1.5; fill:none; marker-end:url(#evt); }
+      .msgtxt  { fill:#cbd5e1; font-size:11px; }
+      .evttxt  { fill:#86efac; font-size:11px; font-weight:600; }
+      .note    { fill:#facc15; font-size:11px; font-style:italic; }
+      .title   { fill:#f1f5f9; font-size:20px; font-weight:700; }
+      .sub     { fill:#94a3b8; font-size:11px; }
+      .block   { fill:#1e293b; stroke:#475569; opacity:0.4; rx:6; }
+    </style>
+  </defs>
+
+  <rect width="1100" height="920" fill="#020617"/>
+  <text x="40" y="32" class="title">Project X — Requirement → Merged PR</text>
+  <text x="40" y="52" class="sub">Green arrows = events appended to events.jsonl and projected to SQLite.</text>
+
+  <!-- Actor heads -->
+  <g transform="translate(0,72)">
+    <rect class="actor" x="40"  y="0" width="110" height="32"/><text x="95"   y="20" text-anchor="middle" class="label">User</text>
+    <rect class="actor" x="170" y="0" width="110" height="32"/><text x="225"  y="20" text-anchor="middle" class="label">px CLI</text>
+    <rect class="actor" x="300" y="0" width="110" height="32"/><text x="355"  y="20" text-anchor="middle" class="label">Planner</text>
+    <rect class="actor" x="430" y="0" width="110" height="32"/><text x="485"  y="20" text-anchor="middle" class="label">Dispatcher</text>
+    <rect class="actor" x="560" y="0" width="110" height="32"/><text x="615"  y="20" text-anchor="middle" class="label">Runtime (tmux)</text>
+    <rect class="actor" x="690" y="0" width="110" height="32"/><text x="745"  y="20" text-anchor="middle" class="label">Pipeline</text>
+    <rect class="actor" x="820" y="0" width="110" height="32"/><text x="875"  y="20" text-anchor="middle" class="label">LLM / git</text>
+    <rect class="actor" x="950" y="0" width="110" height="32"/><text x="1005" y="20" text-anchor="middle" class="label">EventStore</text>
+  </g>
+
+  <!-- Lifelines -->
+  <line class="lifeline" x1="95"   y1="106" x2="95"   y2="890"/>
+  <line class="lifeline" x1="225"  y1="106" x2="225"  y2="890"/>
+  <line class="lifeline" x1="355"  y1="106" x2="355"  y2="890"/>
+  <line class="lifeline" x1="485"  y1="106" x2="485"  y2="890"/>
+  <line class="lifeline" x1="615"  y1="106" x2="615"  y2="890"/>
+  <line class="lifeline" x1="745"  y1="106" x2="745"  y2="890"/>
+  <line class="lifeline" x1="875"  y1="106" x2="875"  y2="890"/>
+  <line class="lifeline" x1="1005" y1="106" x2="1005" y2="890"/>
+
+  <!-- ============= 1. PLAN ============= -->
+  <line class="msg" x1="95"  y1="130" x2="225" y2="130"/>
+  <text x="160" y="124" class="msgtxt">px plan &lt;req&gt;</text>
+
+  <line class="msg" x1="225" y1="160" x2="355" y2="160"/>
+  <text x="290" y="154" class="msgtxt">decompose(req)</text>
+
+  <line class="msg" x1="355" y1="190" x2="875" y2="190"/>
+  <text x="615" y="184" class="msgtxt">LLM: tech-lead prompt + tech-stack scan</text>
+
+  <line class="ret" x1="875" y1="220" x2="355" y2="220"/>
+  <text x="615" y="214" class="msgtxt">stories[] + DAG edges</text>
+
+  <line class="evt" x1="355" y1="250" x2="1005" y2="250"/>
+  <text x="680" y="244" class="evttxt">req.submitted · story.created (×N) · req.planned</text>
+
+  <line class="ret" x1="355" y1="280" x2="225" y2="280"/>
+  <line class="ret" x1="225" y1="280" x2="95"  y2="280"/>
+  <text x="160" y="274" class="msgtxt">req-id printed</text>
+
+  <!-- ============= 2. RESUME / WAVE 1 ============= -->
+  <rect class="block" x="40" y="310" width="1020" height="200"/>
+  <text x="50" y="328" class="note">wave 1 — root stories (parallel)</text>
+
+  <line class="msg" x1="95"  y1="350" x2="225" y2="350"/>
+  <text x="160" y="344" class="msgtxt">px resume &lt;req-id&gt;</text>
+
+  <line class="msg" x1="225" y1="378" x2="485" y2="378"/>
+  <text x="355" y="372" class="msgtxt">DispatchWave(dag, wave=1)</text>
+
+  <line class="msg" x1="485" y1="406" x2="615" y2="406"/>
+  <text x="550" y="400" class="msgtxt">Spawn(role,model,worktree)</text>
+
+  <line class="evt" x1="485" y1="434" x2="1005" y2="434"/>
+  <text x="745" y="428" class="evttxt">agent.spawned · story.assigned</text>
+
+  <line class="msg" x1="615" y1="462" x2="875" y2="462"/>
+  <text x="745" y="456" class="msgtxt">SendInput(prompt) → CLI session</text>
+
+  <line class="ret" x1="875" y1="490" x2="615" y2="490"/>
+  <text x="745" y="484" class="msgtxt">stdout buffered (poll loop)</text>
+
+  <!-- ============= 3. PIPELINE PER STORY ============= -->
+  <rect class="block" x="40" y="528" width="1020" height="290"/>
+  <text x="50" y="546" class="note">per story · pipeline.Run() · serialized rebase+merge via mutex</text>
+
+  <line class="msg" x1="485" y1="568" x2="745" y2="568"/>
+  <text x="615" y="562" class="msgtxt">Run(StoryContext)</text>
+
+  <line class="msg" x1="745" y1="596" x2="875" y2="596"/>
+  <text x="810" y="590" class="msgtxt">autocommit · diffcheck</text>
+
+  <line class="msg" x1="745" y1="624" x2="875" y2="624"/>
+  <text x="810" y="618" class="msgtxt">review (LLM judge)</text>
+
+  <line class="msg" x1="745" y1="652" x2="875" y2="652"/>
+  <text x="810" y="646" class="msgtxt">qa: lint · build · test</text>
+
+  <line class="msg" x1="745" y1="680" x2="875" y2="680"/>
+  <text x="810" y="674" class="msgtxt">rebase (LLM conflict resolve ≤10×)</text>
+
+  <line class="msg" x1="745" y1="708" x2="875" y2="708"/>
+  <text x="810" y="702" class="msgtxt">push · gh pr create · gh pr merge --auto</text>
+
+  <line class="msg" x1="745" y1="736" x2="875" y2="736"/>
+  <text x="810" y="730" class="msgtxt">cleanup: worktree + branch</text>
+
+  <line class="evt" x1="745" y1="766" x2="1005" y2="766"/>
+  <text x="875" y="760" class="evttxt">pipeline.stage_passed × 7 · story.merged</text>
+
+  <line class="ret" x1="745" y1="794" x2="485" y2="794"/>
+  <text x="615" y="788" class="msgtxt">StagePassed</text>
+
+  <!-- ============= 4. NEXT WAVE / DONE ============= -->
+  <line class="msg" x1="485" y1="828" x2="485" y2="846"/>
+  <text x="498" y="836" class="msgtxt">recompute waves (story.merged unlocks deps)</text>
+
+  <line class="ret" x1="485" y1="858" x2="225" y2="858"/>
+  <text x="355" y="852" class="msgtxt">all stories merged → req.completed</text>
+
+  <line class="ret" x1="225" y1="884" x2="95"  y2="884"/>
+  <text x="160" y="878" class="msgtxt">px exits 0 (or pauses on escalation)</text>
+</svg>

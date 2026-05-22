@@ -139,48 +139,13 @@ px dashboard --web           # Browser at http://localhost:7890
 
 ## How It Works
 
-```
-                    +------------------+
-                    |   px plan <req>  |
-                    +--------+---------+
-                             |
-                    +--------v---------+
-                    |   Tech Lead LLM  |
-                    | (decompose into  |
-                    |  atomic stories) |
-                    +--------+---------+
-                             |
-                    +--------v---------+
-                    |    Validator      |
-                    | (quality check,  |
-                    |  DAG validation) |
-                    +--------+---------+
-                             |
-                    +--------v---------+
-                    |   px resume      |
-                    +--------+---------+
-                             |
-              +--------------+--------------+
-              |              |              |
-     +--------v---+  +------v-----+  +-----v------+
-     | Wave 1     |  | Wave 2     |  | Wave 3     |
-     | (parallel) |  | (parallel) |  | (parallel) |
-     +--------+---+  +------+-----+  +-----+------+
-              |              |              |
-              +--------------+--------------+
-                             |
-                    +--------v---------+
-                    |  Post-Execution  |
-                    |    Pipeline      |
-                    +--------+---------+
-                             |
-         +-------+-------+--+--+-------+-------+
-         |       |       |     |       |       |
-      Auto    Diff    Code    QA   Rebase  Merge  Cleanup
-      Commit  Check  Review        + LLM   + PR
-                                   Conflict
-                                   Resolution
-```
+The full requirement-to-merged-PR sequence is rendered below. For the
+deep-dive (component diagram, state model, extension points), see
+[docs/superpowers/specs/2026-05-22-architecture-reference.md](docs/superpowers/specs/2026-05-22-architecture-reference.md).
+
+<p align="center">
+  <img src="docs/diagrams/sequence.svg" alt="px sequence diagram" width="1000" />
+</p>
 
 ### Wave Execution
 
@@ -292,6 +257,10 @@ See [`px.config.example.yaml`](px.config.example.yaml) for all options with inli
 
 ## Architecture
 
+<p align="center">
+  <img src="docs/diagrams/architecture.svg" alt="px component architecture" width="1000" />
+</p>
+
 ```
 project-x/
 ├── cmd/px/              # CLI entry point
@@ -311,10 +280,16 @@ project-x/
 │   ├── state/           # Event store (JSONL), projections (SQLite)
 │   ├── tmux/            # Session management, health monitoring
 │   └── web/             # REST API + SSE + embedded SPA
+├── docs/
+│   ├── diagrams/        # Rendered SVGs (architecture, sequence)
+│   └── superpowers/specs/  # Architecture + onboarding deep-dives
 ├── migrations/          # SQLite schema migrations (embedded)
 ├── web/                 # Browser dashboard (Alpine.js + Tailwind)
 └── test/e2e/            # End-to-end integration tests
 ```
+
+For a guided onboarding (clone → first PR), see
+[docs/superpowers/specs/2026-05-22-onboarding.md](docs/superpowers/specs/2026-05-22-onboarding.md).
 
 ### Package Dependency Flow
 
