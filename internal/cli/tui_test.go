@@ -1,46 +1,36 @@
 package cli
 
 import (
-	"os"
-	"sync"
+	"errors"
 	"testing"
-	"time"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
-// TestRunTUIDashboard_ExitsWithoutTTY ensures the function is at least invoked
-// in a non-interactive test environment. tea.NewProgram fails fast without a
-// real terminal, so we just exercise the wiring.
-func TestRunTUIDashboard_ExitsWithoutTTY(t *testing.T) {
+// withStubTeaRunner replaces the bubbletea program runner with one that
+// returns the provided error without actually starting the terminal loop.
+// This avoids the race conditions that arise when tea reads from os.Stdin
+// while the test swaps it out.
+func withStubTeaRunner(t *testing.T, err error) {
+	t.Helper()
+	prev := teaRunner
+	teaRunner = func(_ *tea.Program) error { return err }
+	t.Cleanup(func() { teaRunner = prev })
+}
+
+func TestRunTUIDashboard_Success(t *testing.T) {
 	setupTestApp(t)
+	withStubTeaRunner(t, nil)
+	if err := runTUIDashboard(); err != nil {
+		t.Errorf("runTUIDashboard: %v", err)
+	}
+}
 
-	// Pipe stdin/stdout so tea can't interact normally.
-	oldIn, oldOut := os.Stdin, os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdin = r
-	os.Stdout = w
-	t.Cleanup(func() {
-		os.Stdin = oldIn
-		os.Stdout = oldOut
-		_ = r.Close()
-		_ = w.Close()
-	})
-
-	done := make(chan struct{})
-	var once sync.Once
-	go func() {
-		defer once.Do(func() { close(done) })
-		defer func() { _ = recover() }() // tea may panic on a closed pipe
-		_ = runTUIDashboard()
-	}()
-
-	// Give tea a moment to start, then close stdin to force it to exit.
-	time.Sleep(50 * time.Millisecond)
-	_ = r.Close()
-	_ = w.Close()
-
-	select {
-	case <-done:
-	case <-time.After(3 * time.Second):
-		t.Log("runTUIDashboard did not exit within 3s (acceptable in some envs)")
+func TestRunTUIDashboard_PropagatesError(t *testing.T) {
+	setupTestApp(t)
+	want := errors.New("tea failure")
+	withStubTeaRunner(t, want)
+	if err := runTUIDashboard(); !errors.Is(err, want) {
+		t.Errorf("err = %v, want %v", err, want)
 	}
 }

@@ -40,6 +40,14 @@ func newDashboardCmd() *cobra.Command {
 	return cmd
 }
 
+// teaRunner is the function used to actually run the bubbletea program. Tests
+// override it to avoid touching the real terminal (which can deadlock under
+// -race when stdin/stdout are swapped concurrently with tea reading them).
+var teaRunner = func(p *tea.Program) error {
+	_, err := p.Run()
+	return err
+}
+
 func runTUIDashboard() error {
 	logPath := filepath.Join(app.stateDir, "logs")
 
@@ -56,8 +64,7 @@ func runTUIDashboard() error {
 	model := dashboard.New(cfg)
 	p := tea.NewProgram(model, tea.WithAltScreen())
 
-	_, err := p.Run()
-	return err
+	return teaRunner(p)
 }
 
 func runWebDashboard(ctx context.Context, port int, bind string) error {
