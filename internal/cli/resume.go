@@ -140,16 +140,59 @@ func runResume(ctx context.Context, reqID string, godmode bool) error {
 	)
 
 	// 8. Wave loop: dispatch → monitor → repeat until all done
+	return runWaveLoop(ctx, waveLoopDeps{
+		dispatcher: dispatcher,
+		executor:   executor,
+		poller:     poller,
+		dag:        dag,
+		storyMap:   storyMap,
+		completed:  completed,
+		stories:    stories,
+		reqID:      reqID,
+		repoDir:    repoDir,
+	})
+}
+
+// waveDispatcher abstracts monitor.Dispatcher for testability.
+type waveDispatcher interface {
+	DispatchWave(dag *graph.DAG, completed map[string]bool, reqID string, storyMap map[string]planner.PlannedStory, wave int) ([]monitor.Assignment, error)
+}
+
+// waveExecutor abstracts monitor.Executor for testability.
+type waveExecutor interface {
+	SpawnAll(repoDir string, assignments []monitor.Assignment, storyMap map[string]planner.PlannedStory) []monitor.SpawnResult
+}
+
+// wavePoller abstracts monitor.Poller for testability.
+type wavePoller interface {
+	Run(ctx context.Context, agents []monitor.ActiveAgent, repoDir string) error
+}
+
+// waveLoopDeps bundles the inputs that the wave-loop body needs. Splitting it
+// out lets tests substitute fake dispatcher/executor/poller without touching
+// the rest of runResume.
+type waveLoopDeps struct {
+	dispatcher waveDispatcher
+	executor   waveExecutor
+	poller     wavePoller
+	dag        *graph.DAG
+	storyMap   map[string]planner.PlannedStory
+	completed  map[string]bool
+	stories    []state.Story
+	reqID      string
+	repoDir    string
+}
+
+func runWaveLoop(ctx context.Context, d waveLoopDeps) error {
 	waveNumber := 0
 	for {
 		waveNumber++
-		assignments, err := dispatcher.DispatchWave(dag, completed, reqID, storyMap, waveNumber)
+		assignments, err := d.dispatcher.DispatchWave(d.dag, d.completed, d.reqID, d.storyMap, waveNumber)
 		if err != nil {
 			return fmt.Errorf("dispatch wave %d: %w", waveNumber, err)
 		}
 		if len(assignments) == 0 {
-			// Check if all stories are done
-			allDone := len(completed) == len(stories)
+			allDone := len(d.completed) == len(d.stories)
 			if allDone {
 				break
 			}
@@ -162,7 +205,6 @@ func runResume(ctx context.Context, reqID string, godmode bool) error {
 			fmt.Printf("  %s → %s (branch: %s)\n", a.StoryID, a.Role, a.Branch)
 		}
 
-		// Emit assignment events
 		for _, a := range assignments {
 			evt := state.NewEvent(state.EventStoryAssigned, a.AgentID, a.StoryID, map[string]any{
 				"agent_id": a.AgentID,
@@ -172,8 +214,7 @@ func runResume(ctx context.Context, reqID string, godmode bool) error {
 			app.projector.Send(evt)
 		}
 
-		// Spawn agents
-		results := executor.SpawnAll(repoDir, assignments, storyMap)
+		results := d.executor.SpawnAll(d.repoDir, assignments, d.storyMap)
 		var activeAgents []monitor.ActiveAgent
 		for _, r := range results {
 			if r.Error != nil {
@@ -185,7 +226,7 @@ func runResume(ctx context.Context, reqID string, godmode bool) error {
 				WorktreePath:   r.WorktreePath,
 				RuntimeName:    r.RuntimeName,
 				Model:          r.Model,
-				Story:          storyMap[r.Assignment.StoryID],
+				Story:          d.storyMap[r.Assignment.StoryID],
 				TranscriptPath: r.TranscriptPath,
 			})
 		}
@@ -195,32 +236,28 @@ func runResume(ctx context.Context, reqID string, godmode bool) error {
 			break
 		}
 
-		// Monitor until all agents complete
-		if err := poller.Run(ctx, activeAgents, repoDir); err != nil {
+		if err := d.poller.Run(ctx, activeAgents, d.repoDir); err != nil {
 			return fmt.Errorf("poller: %w", err)
 		}
 
-		// Update completed set
-		refreshedStories, _ := app.projStore.ListStories(state.StoryFilter{ReqID: reqID})
+		refreshedStories, _ := app.projStore.ListStories(state.StoryFilter{ReqID: d.reqID})
 		for _, s := range refreshedStories {
 			if s.Status == "merged" || s.Status == "pr_submitted" {
-				completed[s.ID] = true
+				d.completed[s.ID] = true
 			}
 		}
 
-		// Check for context cancellation
 		if ctx.Err() != nil {
-			fmt.Println("Shutdown complete. Resume later with: px resume", reqID)
+			fmt.Println("Shutdown complete. Resume later with: px resume", d.reqID)
 			return nil
 		}
 	}
 
-	// 9. Mark requirement complete if all stories done
-	if len(completed) == len(stories) {
-		compEvt := state.NewEvent(state.EventReqCompleted, "monitor", "", map[string]any{"id": reqID})
+	if len(d.completed) == len(d.stories) {
+		compEvt := state.NewEvent(state.EventReqCompleted, "monitor", "", map[string]any{"id": d.reqID})
 		app.eventStore.Append(compEvt)
 		app.projector.Send(compEvt)
-		fmt.Printf("\nAll %d stories complete! Requirement %s is done.\n", len(stories), reqID)
+		fmt.Printf("\nAll %d stories complete! Requirement %s is done.\n", len(d.stories), d.reqID)
 	}
 
 	return nil

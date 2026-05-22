@@ -94,11 +94,17 @@ func stdinIsInteractive() bool {
 	return (info.Mode() & os.ModeCharDevice) != 0
 }
 
-func openApprovalInput() (*os.File, *bufio.Reader, error) {
-	if stdinIsInteractive() {
-		return os.Stdin, bufio.NewReader(os.Stdin), nil
-	}
+// approvalInputOpener returns the file + reader used to gather an approval
+// decision. Tests override this to avoid depending on a real TTY.
+var approvalInputOpener = defaultOpenApprovalInput
 
+func openApprovalInput() (*os.File, *bufio.Reader, error) {
+	return approvalInputOpener()
+}
+
+func defaultOpenApprovalInput() (*os.File, *bufio.Reader, error) {
+	// /dev/tty works both when stdin is interactive (returns the same TTY) and
+	// when stdin is piped (provides a fallback channel for the prompt).
 	tty, err := os.Open("/dev/tty")
 	if err != nil {
 		return nil, nil, err

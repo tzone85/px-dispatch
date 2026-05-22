@@ -12,12 +12,21 @@ const (
 	retryBaseDelay   = 2 * time.Second
 )
 
+// llmClientBuilder is the package-level constructor for the LLM client used by
+// commands. Tests override it to inject a deterministic in-memory client so
+// runPlan/runPlanRefine can be exercised without a live subscription or API.
+var llmClientBuilder = defaultBuildLLMClient
+
 // buildLLMClient returns an LLM client wrapped with retry logic.
 // Claude CLI is ALWAYS the primary client (uses subscription, no per-token cost).
 // Anthropic API is only used as a fallback if PX_USE_API=true is explicitly set.
 // This prevents accidental API spend while still allowing approved fallback
 // to OpenAI when Claude is exhausted.
 func buildLLMClient() llm.Client {
+	return llmClientBuilder()
+}
+
+func defaultBuildLLMClient() llm.Client {
 	var base llm.Client
 
 	if os.Getenv("PX_USE_API") == "true" {

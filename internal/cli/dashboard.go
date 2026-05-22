@@ -91,10 +91,15 @@ func runWebDashboard(ctx context.Context, port int, bind string) error {
 	return srv.Start(ctx)
 }
 
+// browserGOOS reports the current operating system identifier. It is a
+// variable so tests can simulate non-darwin platforms without having to
+// cross-build.
+var browserGOOS = func() string { return runtime.GOOS }
+
 // openBrowser opens the URL in the default browser. Best-effort; no error on failure.
 func openBrowser(url string) {
 	var cmd *exec.Cmd
-	switch runtime.GOOS {
+	switch browserGOOS() {
 	case "darwin":
 		cmd = exec.Command("open", url)
 	case "linux":
