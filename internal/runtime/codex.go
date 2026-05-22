@@ -119,15 +119,17 @@ func (c *CodexRuntime) buildCommand(cfg SessionConfig) string {
 	parts = append(parts, "-")
 	cmd := strings.Join(parts, " ")
 
-	// Keep the session alive briefly with a bare "$" marker so the poller can
-	// classify the agent as done and advance the pipeline before tmux exits.
-	return "cat <<'PX_EOF' | " + cmd + "\n" + cfg.Goal + "\nPX_EOF\n" +
-		"status=$?\n" +
-		"if [ $status -eq 0 ]; then\n" +
-		"  printf '$\\n'\n" +
-		"  sleep 30\n" +
-		"fi\n" +
-		"exit $status"
+	// `.px-done` is touched unconditionally after the CLI exits so the
+	// pipeline poller can advance regardless of codex's exit code; pipeline
+	// stages (diffcheck, qa) judge success based on the actual repo state.
+	// Use `rc` not `status` — `status` is read-only in zsh.
+	return "rm -f .px-done\n" +
+		"cat <<'PX_EOF' | " + cmd + "\n" + cfg.Goal + "\nPX_EOF\n" +
+		"rc=$?\n" +
+		"printf '$\\n'\n" +
+		"touch .px-done\n" +
+		"sleep 30\n" +
+		"exit $rc"
 }
 
 // classifyOutput matches Codex output against known patterns.

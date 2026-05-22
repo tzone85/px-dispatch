@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"fmt"
+	"log/slog"
 	"regexp"
 	"strings"
 
@@ -55,6 +56,11 @@ func (c *ClaudeCodeRuntime) Health(runner git.CommandRunner, sessionName string)
 // Spawn starts a Claude Code session inside a new tmux session.
 func (c *ClaudeCodeRuntime) Spawn(runner git.CommandRunner, cfg SessionConfig) error {
 	cmd := c.buildCommand(cfg)
+	slog.Debug("claude spawn",
+		"session", cfg.SessionName,
+		"workdir", cfg.WorkDir,
+		"goal_len", len(cfg.Goal),
+		"sysprompt_len", len(cfg.SystemPrompt))
 	return tmux.CreateSession(runner, cfg.SessionName, cfg.WorkDir, cmd)
 }
 
@@ -88,6 +94,10 @@ func (c *ClaudeCodeRuntime) SendInput(runner git.CommandRunner, sessionName stri
 }
 
 // Capabilities returns what Claude Code supports.
+// SupportsLogFile is true, but the transcript is captured via shell `tee`
+// inside buildCommand because the claude CLI exposes --output-format
+// (text/json/stream-json) and has no --output-file flag. Passing an unknown
+// flag would cause the CLI to exit immediately and kill the tmux session.
 func (c *ClaudeCodeRuntime) Capabilities() RuntimeCapabilities {
 	return RuntimeCapabilities{
 		SupportsModel: []string{
@@ -122,24 +132,34 @@ func (c *ClaudeCodeRuntime) buildCommand(cfg SessionConfig) string {
 		parts = append(parts, "--system-prompt", shellQuote(cfg.SystemPrompt))
 	}
 
-	if cfg.LogFile != "" {
-		parts = append(parts, "--output-file", shellQuote(cfg.LogFile))
-	}
-
 	// Pipe the goal via stdin using a heredoc to avoid shell arg length limits.
 	// The -p - flag tells Claude CLI to read the prompt from stdin.
 	parts = append(parts, "-p", "-")
 	cmd := strings.Join(parts, " ")
+	if cfg.LogFile != "" {
+		// claude CLI lacks --output-file; tee the response to a transcript
+		// file via the shell instead.
+		cmd = cmd + " | tee " + shellQuote(cfg.LogFile)
+	}
 
 	// Use a heredoc to pipe the goal into stdin.
 	// The PX_EOF delimiter is unlikely to appear in prompts.
-	return "cat <<'PX_EOF' | " + cmd + "\n" + cfg.Goal + "\nPX_EOF\n" +
-		"status=$?\n" +
-		"if [ $status -eq 0 ]; then\n" +
-		"  printf '$\\n'\n" +
-		"  sleep 30\n" +
-		"fi\n" +
-		"exit $status"
+	// `.px-done` is a filesystem sentinel the monitor poller checks on every
+	// cycle. Touch it UNCONDITIONALLY after claude exits so the pipeline can
+	// advance; pipeline stages (diffcheck, qa) decide success/failure based on
+	// actual repo state, not on claude's pipeline exit code (which can be
+	// non-zero even when the agent committed work).
+	//
+	// NOTE: use `rc=$?` not `status=$?`. In zsh (macOS default-shell for tmux)
+	// `status` is a read-only built-in alias for `$?`; assigning to it aborts
+	// the script before the sentinel can be touched.
+	return "rm -f .px-done\n" +
+		"cat <<'PX_EOF' | " + cmd + "\n" + cfg.Goal + "\nPX_EOF\n" +
+		"rc=$?\n" +
+		"printf '$\\n'\n" +
+		"touch .px-done\n" +
+		"sleep 30\n" +
+		"exit $rc"
 }
 
 // classifyOutput matches output against known patterns.

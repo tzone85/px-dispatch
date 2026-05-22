@@ -249,6 +249,15 @@ func TestCodexRuntime_BuildCommand(t *testing.T) {
 					t.Errorf("buildCommand() should not contain %q in %q", part, cmd)
 				}
 			}
+			if !strings.Contains(cmd, "touch .px-done") {
+				t.Errorf("buildCommand() must touch the .px-done completion sentinel: %q", cmd)
+			}
+			if !strings.Contains(cmd, "rm -f .px-done") {
+				t.Errorf("buildCommand() must clear stale sentinel before run: %q", cmd)
+			}
+			if strings.Contains(cmd, "status=$?") {
+				t.Errorf("must not assign to zsh read-only `status`; use `rc=$?`. cmd=%q", cmd)
+			}
 		})
 	}
 }

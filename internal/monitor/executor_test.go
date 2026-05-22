@@ -218,8 +218,11 @@ func TestExecutor_SpawnAll_ConfiguresTranscriptLogForClaude(t *testing.T) {
 
 	newCmd := mockRunner.Commands[len(mockRunner.Commands)-1]
 	lastArg := newCmd.Args[len(newCmd.Args)-1]
-	if !strings.Contains(lastArg, "--output-file") {
-		t.Fatalf("expected claude command to include --output-file, got %q", lastArg)
+	if strings.Contains(lastArg, "--output-file") {
+		t.Fatalf("claude CLI has no --output-file flag; expected tee redirect, got %q", lastArg)
+	}
+	if !strings.Contains(lastArg, "tee ") {
+		t.Fatalf("expected tee redirect for transcript capture, got %q", lastArg)
 	}
 	if !strings.Contains(lastArg, transcriptFileName) {
 		t.Fatalf("expected claude command to point at transcript file, got %q", lastArg)

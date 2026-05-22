@@ -2,6 +2,8 @@ package monitor
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -160,6 +162,48 @@ func TestPoller_SerializedMerge(t *testing.T) {
 	defer pr.mu.Unlock()
 	if len(pr.runs) < 2 {
 		t.Errorf("expected both agents processed, got %d", len(pr.runs))
+	}
+}
+
+func TestPoller_MissingSessionWithSentinelTriggersPipeline(t *testing.T) {
+	// When the tmux session has already exited but the runtime wrote the
+	// `.px-done` sentinel into the worktree, the poller must treat the
+	// agent as finished and run the pipeline rather than emit agent.lost.
+	worktree := t.TempDir()
+	if err := os.WriteFile(filepath.Join(worktree, completionSentinel), nil, 0o644); err != nil {
+		t.Fatalf("write sentinel: %v", err)
+	}
+
+	es := &mockEventStore{}
+	runner := newSafeRunner()
+	runner.AddResponse("", errNoSession) // tmux has-session -> missing
+
+	pr := &mockPipelineRunner{result: pipeline.StagePassed}
+
+	agents := []ActiveAgent{
+		{
+			Assignment:   Assignment{StoryID: "s-1", SessionName: "px-s-1"},
+			WorktreePath: worktree,
+			RuntimeName:  "claude-code",
+		},
+	}
+
+	p := NewPoller(PollerConfig{PollIntervalMs: 10}, runner, nil, pr, es, nil, nil, nil)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+	p.Run(ctx, agents, ".")
+
+	pr.mu.Lock()
+	defer pr.mu.Unlock()
+	if len(pr.runs) == 0 {
+		t.Error("expected pipeline to run when sentinel exists despite missing session")
+	}
+}
+
+func TestSentinelExists_HandlesEmptyPath(t *testing.T) {
+	if sentinelExists("") {
+		t.Error("empty worktree path must return false")
 	}
 }
 
