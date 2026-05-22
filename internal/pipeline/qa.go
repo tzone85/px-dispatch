@@ -29,6 +29,12 @@ func NewQAStage(runner git.CommandRunner) *QAStage {
 func (s *QAStage) Name() string { return "qa" }
 
 // Execute detects the tech stack and runs the appropriate QA commands.
+//
+// "No test files found" is treated as a non-failure: an early scaffolding
+// story may legitimately have no tests yet, and the spec-compliance check
+// in the review stage already gates whether tests were *expected* for this
+// story. Failing here on absent tests would cause an infinite respawn on
+// stories whose acceptance criteria don't include tests.
 func (s *QAStage) Execute(_ context.Context, sc StoryContext) (StageResult, error) {
 	files, err := s.runner.Run(sc.WorktreePath, "git", "ls-files")
 	if err != nil {
@@ -42,11 +48,38 @@ func (s *QAStage) Execute(_ context.Context, sc StoryContext) (StageResult, erro
 
 	for _, cmd := range commands {
 		if _, err := s.runner.Run(sc.WorktreePath, cmd.name, cmd.args...); err != nil {
+			if isNoTestsError(err) {
+				continue
+			}
 			return StageFailed, fmt.Errorf("%s %s: %w", cmd.name, strings.Join(cmd.args, " "), err)
 		}
 	}
 
 	return StagePassed, nil
+}
+
+// isNoTestsError reports whether the error from a test command means
+// "no test files found yet" rather than a real failure. Recognised today:
+//   - vitest:  "No test files found, exiting with code 1"
+//   - jest:    "No tests found"
+//   - pytest:  "no tests ran in"
+//   - go test: "[no test files]"
+func isNoTestsError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	for _, marker := range []string{
+		"No test files found",
+		"No tests found",
+		"no tests ran",
+		"[no test files]",
+	} {
+		if strings.Contains(msg, marker) {
+			return true
+		}
+	}
+	return false
 }
 
 // detectQACommands determines which QA commands to run based on file markers.
