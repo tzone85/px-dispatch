@@ -74,11 +74,14 @@ func runWebDashboard(ctx context.Context, port int, bind string) error {
 	}()
 
 	srv := web.NewServer(web.ServerConfig{
-		Port:       port,
-		Bind:       bind,
-		EventStore: app.eventStore,
-		ProjStore:  app.projStore,
-		DB:         app.projStore.DB(),
+		Port:          port,
+		Bind:          bind,
+		Version:       version,
+		DailyLimitUSD: app.config.Budget.MaxCostPerDayUSD,
+		LogPath:       filepath.Join(app.stateDir, "logs", "px.log"),
+		EventStore:    app.eventStore,
+		ProjStore:     app.projStore,
+		DB:            app.projStore.DB(),
 	})
 
 	url := fmt.Sprintf("http://%s:%d", bind, port)

@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/tzone85/project-x/internal/state"
@@ -16,9 +18,87 @@ var startTime = time.Now()
 // Handlers provides HTTP handler methods for the web dashboard API.
 // All handlers return JSON responses with proper Content-Type headers.
 type Handlers struct {
-	eventStore state.EventStore
-	projStore  *state.SQLiteStore
-	db         *sql.DB
+	eventStore    state.EventStore
+	projStore     *state.SQLiteStore
+	db            *sql.DB
+	version       string
+	dailyLimitUSD float64
+	logPath       string
+}
+
+// maxLogLines caps the number of trailing log lines served by GetLogs to
+// keep per-request memory bounded regardless of the requested ?limit=.
+const maxLogLines = 5000
+
+// aboutResponse is the JSON shape returned by /api/about.
+// Serves as the canonical project description preview consumed by the dashboard.
+type aboutResponse struct {
+	Name           string   `json:"name"`
+	Tagline        string   `json:"tagline"`
+	Version        string   `json:"version"`
+	Description    string   `json:"description"`
+	Features       []string `json:"features"`
+	PipelineStages []string `json:"pipeline_stages"`
+	Runtimes       []string `json:"runtimes"`
+	Repo           string   `json:"repo"`
+	Docs           string   `json:"docs"`
+	License        string   `json:"license"`
+}
+
+// projectAbout is the immutable canonical description served by /api/about.
+// Mirrors README.md and is verified by tests so the two cannot drift silently.
+var projectAbout = aboutResponse{
+	Name:    "Project X",
+	Tagline: "Autonomous AI agent orchestration for the full software development lifecycle.",
+	Description: "px decomposes natural-language requirements into atomic stories, " +
+		"dispatches AI coding agents across parallel waves, and drives each story through " +
+		"code review, QA, rebase with LLM-powered conflict resolution, and auto-merge — " +
+		"all while enforcing cost budgets and monitoring session health.",
+	Features: []string{
+		"Multi-Agent Orchestration (parallel waves, DAG-based dependency resolution)",
+		"Cost Protection (per-story, per-requirement, daily budget breakers)",
+		"Multi-Runtime (Claude Code, Codex, Gemini)",
+		"Two-Pass Planning (decompose + validate before dispatch)",
+		"7-Stage Pipeline (autocommit, diff, review, QA, rebase, merge, cleanup)",
+		"LLM Conflict Resolution (rebase conflicts auto-resolved up to 10 rounds)",
+		"Session Health Watchdog (stale/dead/missing detection + recovery)",
+		"TUI + Web Dashboards (6 panels, real-time SSE)",
+		"Event-Sourced State (append-only JSONL + SQLite projections)",
+	},
+	PipelineStages: []string{
+		"autocommit",
+		"diffcheck",
+		"review",
+		"qa",
+		"rebase",
+		"merge",
+		"cleanup",
+	},
+	Runtimes: []string{"claude-code", "codex", "gemini"},
+	Repo:     "https://github.com/tzone85/project-x",
+	Docs:     "/docs/architecture.md",
+	License:  "Apache-2.0",
+}
+
+// GetAbout returns project metadata so dashboards and external tools can
+// preview what px does without parsing the README.
+func (h *Handlers) GetAbout(w http.ResponseWriter, r *http.Request) {
+	resp := projectAbout
+	resp.Version = h.version
+	if resp.Version == "" {
+		resp.Version = "dev"
+	}
+	writeJSON(w, resp)
+}
+
+// ListEscalations returns all recorded escalations, newest first.
+func (h *Handlers) ListEscalations(w http.ResponseWriter, r *http.Request) {
+	escs, err := h.projStore.ListEscalations()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, ensureSlice(escs))
 }
 
 // ListRequirements returns all non-archived requirements as JSON.
@@ -86,9 +166,16 @@ func (h *Handlers) ListEvents(w http.ResponseWriter, r *http.Request) {
 
 // costResponse is the JSON shape returned by the cost endpoint.
 type costResponse struct {
-	TodayUSD float64 `json:"today_usd"`
-	ReqUSD   float64 `json:"req_usd,omitempty"`
-	StoryUSD float64 `json:"story_usd,omitempty"`
+	TodayUSD      float64 `json:"today_usd"`
+	DailyLimitUSD float64 `json:"daily_limit_usd"`
+	ReqUSD        float64 `json:"req_usd,omitempty"`
+	StoryUSD      float64 `json:"story_usd,omitempty"`
+}
+
+// logsResponse is the JSON shape returned by /api/logs.
+type logsResponse struct {
+	Lines []string `json:"lines"`
+	Path  string   `json:"path"`
 }
 
 // GetCost returns cost summary data. Supports optional query parameters:
@@ -106,6 +193,7 @@ func (h *Handlers) GetCost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp.TodayUSD = dailyCost
+	resp.DailyLimitUSD = h.dailyLimitUSD
 
 	// Optional: cost by requirement.
 	if reqID := q.Get("req_id"); reqID != "" {
@@ -134,6 +222,45 @@ func (h *Handlers) GetCost(w http.ResponseWriter, r *http.Request) {
 type healthResponse struct {
 	Status string `json:"status"`
 	Uptime string `json:"uptime"`
+}
+
+// GetLogs returns the trailing log lines from the configured log file.
+// Optional ?limit=N caps to the last N lines (default 200, max maxLogLines).
+// If the log file does not exist (e.g. fresh install before any run), an
+// empty array is returned with HTTP 200 rather than an error.
+func (h *Handlers) GetLogs(w http.ResponseWriter, r *http.Request) {
+	limit := parseIntParam(r.URL.Query().Get("limit"), 200)
+	if limit <= 0 {
+		limit = 200
+	}
+	if limit > maxLogLines {
+		limit = maxLogLines
+	}
+
+	resp := logsResponse{Lines: []string{}, Path: h.logPath}
+
+	if h.logPath == "" {
+		writeJSON(w, resp)
+		return
+	}
+
+	data, err := os.ReadFile(h.logPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			writeJSON(w, resp)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Split into lines, drop trailing empty line if file ends with newline.
+	all := strings.Split(strings.TrimRight(string(data), "\n"), "\n")
+	if len(all) > limit {
+		all = all[len(all)-limit:]
+	}
+	resp.Lines = all
+	writeJSON(w, resp)
 }
 
 // GetHealth returns the server health status.

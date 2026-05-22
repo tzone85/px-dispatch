@@ -14,11 +14,14 @@ import (
 
 // ServerConfig holds web dashboard configuration.
 type ServerConfig struct {
-	Port       int
-	Bind       string // default "127.0.0.1"
-	EventStore state.EventStore
-	ProjStore  *state.SQLiteStore
-	DB         *sql.DB
+	Port          int
+	Bind          string  // default "127.0.0.1"
+	Version       string  // px build version, surfaced on /api/about
+	DailyLimitUSD float64 // daily cost budget, surfaced on /api/cost
+	LogPath       string  // path to px.log; surfaced via /api/logs (empty disables)
+	EventStore    state.EventStore
+	ProjStore     *state.SQLiteStore
+	DB            *sql.DB
 }
 
 // Server is the web dashboard HTTP server.
@@ -43,9 +46,12 @@ func NewServer(cfg ServerConfig) *Server {
 	mux := http.NewServeMux()
 
 	h := &Handlers{
-		eventStore: cfg.EventStore,
-		projStore:  cfg.ProjStore,
-		db:         cfg.DB,
+		eventStore:    cfg.EventStore,
+		projStore:     cfg.ProjStore,
+		db:            cfg.DB,
+		version:       cfg.Version,
+		dailyLimitUSD: cfg.DailyLimitUSD,
+		logPath:       cfg.LogPath,
 	}
 
 	// API routes (Go 1.22+ method-based routing).
@@ -53,8 +59,11 @@ func NewServer(cfg ServerConfig) *Server {
 	mux.HandleFunc("GET /api/stories", h.ListStories)
 	mux.HandleFunc("GET /api/agents", h.ListAgents)
 	mux.HandleFunc("GET /api/events", h.ListEvents)
+	mux.HandleFunc("GET /api/escalations", h.ListEscalations)
 	mux.HandleFunc("GET /api/cost", h.GetCost)
 	mux.HandleFunc("GET /api/health", h.GetHealth)
+	mux.HandleFunc("GET /api/about", h.GetAbout)
+	mux.HandleFunc("GET /api/logs", h.GetLogs)
 	mux.HandleFunc("GET /api/stream", hub.ServeHTTP)
 
 	// Static files (embedded dashboard assets).
