@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/spf13/cobra"
@@ -258,7 +259,34 @@ func runWaveLoop(ctx context.Context, d waveLoopDeps) error {
 		app.eventStore.Append(compEvt)
 		app.projector.Send(compEvt)
 		fmt.Printf("\nAll %d stories complete! Requirement %s is done.\n", len(d.stories), d.reqID)
+
+		// Fire-and-forget cleanup: remove worktrees + kill tmux panes for
+		// every story under this requirement so the workspace is empty when
+		// the user comes back. Branches stay locally for a moment because the
+		// merge stage may still have a final commit in transit; the next gc
+		// run (manual or scheduled) will reap them.
+		autoCleanupAfterCompletion(d.reqID, d.repoDir, d.stories)
 	}
 
 	return nil
+}
+
+// autoCleanupAfterCompletion deletes worktrees and kills tmux sessions
+// belonging to a completed requirement so the user does not have to run gc.
+// Best-effort: failures are logged but do not propagate.
+func autoCleanupAfterCompletion(reqID, repoDir string, stories []state.Story) {
+	worktreesDir := filepath.Join(app.stateDir, "worktrees")
+	for _, s := range stories {
+		path := filepath.Join(worktreesDir, s.ID)
+		if _, err := os.Stat(path); err != nil {
+			continue
+		}
+		// Use git's worktree-aware remove first; fall back to plain rm.
+		if err := runGit(repoDir, "worktree", "remove", path, "--force"); err != nil {
+			_ = os.RemoveAll(path)
+		}
+		_ = runGit(repoDir, "branch", "-D", "px/"+s.ID)
+		_ = runShellQuiet("tmux", "kill-session", "-t", "px-"+s.ID)
+	}
+	fmt.Println("Cleanup complete: worktrees + tmux sessions for completed stories removed.")
 }

@@ -367,8 +367,8 @@ func TestGCCmd_NoWorktreesDir(t *testing.T) {
 	out := captureStdout(t, func() {
 		_ = newGCCmd().Execute()
 	})
-	if !strings.Contains(out, "No worktrees found") {
-		t.Errorf("expected no-worktrees message, got %q", out)
+	if !strings.Contains(out, "0 worktrees") {
+		t.Errorf("expected gc summary with 0 worktrees, got %q", out)
 	}
 }
 
@@ -413,8 +413,8 @@ func TestGCCmd_KeepsActive(t *testing.T) {
 	out := captureStdout(t, func() {
 		_ = newGCCmd().Execute()
 	})
-	if !strings.Contains(out, "Nothing to collect") {
-		t.Errorf("expected 'Nothing to collect' when only active worktrees, got %q", out)
+	if !strings.Contains(out, "0 worktrees") {
+		t.Errorf("expected 0 worktrees removed when only active ones exist, got %q", out)
 	}
 	if _, err := os.Stat(filepath.Join(wDir, "ACTIVE")); err != nil {
 		t.Errorf("active worktree should not be removed: %v", err)

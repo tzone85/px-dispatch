@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/tzone85/project-x/internal/git"
@@ -38,6 +40,13 @@ func (s *RebaseStage) Execute(ctx context.Context, sc StoryContext) (StageResult
 		baseBranch = "main"
 	}
 
+	// Defensive: abort any rebase the worktree may already be sitting inside
+	// (e.g. a previous run that was killed mid-conflict). Without this,
+	// `git rebase origin/main` would fail with "It seems that there is already
+	// a rebase-merge directory" and the stage would loop forever.
+	// See SHARED_LEARNINGS.md (VXD tic-tac-toe pilot finding #4).
+	s.abortStaleRebase(sc)
+
 	if _, err := s.runner.Run(sc.RepoDir, "git", "fetch", "origin", baseBranch); err != nil {
 		return StageFailed, fmt.Errorf("fetching %s: %w", baseBranch, err)
 	}
@@ -47,6 +56,35 @@ func (s *RebaseStage) Execute(ctx context.Context, sc StoryContext) (StageResult
 	}
 
 	return s.resolveConflicts(ctx, sc)
+}
+
+// abortStaleRebase checks the worktree's `.git` metadata for an in-progress
+// rebase and aborts it if found. Uses os.Stat rather than the command runner
+// so the preflight cost is one syscall and doesn't perturb mock-runner test
+// ordering. Best-effort: any abort error is logged and ignored.
+func (s *RebaseStage) abortStaleRebase(sc StoryContext) {
+	if sc.WorktreePath == "" {
+		return
+	}
+	gitDir := filepath.Join(sc.WorktreePath, ".git")
+	// A worktree's .git is a *file* pointing at the actual gitdir under the
+	// repo's .git/worktrees/<name>/. Resolve it first.
+	if info, err := os.Stat(gitDir); err == nil && !info.IsDir() {
+		if data, err := os.ReadFile(gitDir); err == nil {
+			line := strings.TrimSpace(strings.TrimPrefix(string(data), "gitdir:"))
+			if line != "" {
+				gitDir = strings.TrimSpace(line)
+			}
+		}
+	}
+	for _, marker := range []string{"rebase-merge", "rebase-apply"} {
+		if info, err := os.Stat(filepath.Join(gitDir, marker)); err == nil && info.IsDir() {
+			slog.Warn("stale rebase detected in worktree; aborting before retry",
+				"story", sc.StoryID, "worktree", sc.WorktreePath, "marker", marker)
+			_, _ = s.runner.Run(sc.WorktreePath, "git", "rebase", "--abort")
+			return
+		}
+	}
 }
 
 func (s *RebaseStage) resolveConflicts(ctx context.Context, sc StoryContext) (StageResult, error) {

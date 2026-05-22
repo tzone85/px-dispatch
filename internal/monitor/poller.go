@@ -189,13 +189,17 @@ func (p *Poller) runPipelineForCompletedAgent(ctx context.Context, wg *sync.Wait
 		defer p.mergeMu.Unlock()
 
 		sc := pipeline.StoryContext{
-			StoryID:      a.Assignment.StoryID,
-			Branch:       a.Assignment.Branch,
-			WorktreePath: a.WorktreePath,
-			RepoDir:      repoDir,
-			AgentID:      a.Assignment.AgentID,
-			RuntimeName:  a.RuntimeName,
-			BaseBranch:   "main",
+			StoryID:            a.Assignment.StoryID,
+			Branch:             a.Assignment.Branch,
+			WorktreePath:       a.WorktreePath,
+			RepoDir:            repoDir,
+			AgentID:            a.Assignment.AgentID,
+			RuntimeName:        a.RuntimeName,
+			BaseBranch:         "main",
+			StoryTitle:         a.Story.Title,
+			StoryDescription:   a.Story.Description,
+			AcceptanceCriteria: a.Story.AcceptanceCriteria,
+			OwnedFiles:         a.Story.OwnedFiles,
 		}
 		result, err := p.pipeline.Run(ctx, sc)
 		if err != nil {

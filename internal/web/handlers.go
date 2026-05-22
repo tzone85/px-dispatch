@@ -301,10 +301,12 @@ func ensureSlice[T any](s []T) []T {
 }
 
 // queryCostByDay returns the total cost for a given date from the token_usage table.
+// `created_at` is stored as UTC; convert to localtime when matching against the
+// caller's local-formatted date string to avoid a timezone-boundary off-by-one.
 func queryCostByDay(db *sql.DB, date string) (float64, error) {
 	var total float64
 	err := db.QueryRow(
-		"SELECT COALESCE(SUM(cost_usd), 0) FROM token_usage WHERE date(created_at) = ?",
+		"SELECT COALESCE(SUM(cost_usd), 0) FROM token_usage WHERE date(created_at, 'localtime') = ?",
 		date,
 	).Scan(&total)
 	if err != nil {

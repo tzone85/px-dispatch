@@ -127,12 +127,18 @@ func (e *Executor) spawnOne(
 
 	// Step 4: Build prompts and spawn runtime session.
 	promptCtx := agent.PromptContext{
+		TeamName:           "Project X",
 		StoryID:            a.StoryID,
 		StoryTitle:         story.Title,
 		StoryDescription:   story.Description,
 		AcceptanceCriteria: story.AcceptanceCriteria,
 		RepoPath:           worktreePath,
 		Complexity:         story.Complexity,
+		IsExistingCodebase: detectExistingCodebase(worktreePath),
+		IsBugFix:           classifyIsBugFix(story.Title, story.Description),
+		IsInfrastructure:   classifyIsInfrastructure(story.Title, story.Description, story.OwnedFiles),
+		DesignApproach:     "ddd-tdd", // project-x default — agents follow DDD+TDD unless overridden
+		WaveContext:        e.loadWaveContext(worktreePath),
 	}
 
 	goal := agent.GoalPrompt(a.Role, promptCtx)
