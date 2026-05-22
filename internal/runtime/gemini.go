@@ -107,7 +107,18 @@ func (c *GeminiRuntime) buildCommand(cfg SessionConfig) string {
 
 	parts = append(parts, shellQuote(cfg.Goal))
 
-	return strings.Join(parts, " ")
+	cmd := strings.Join(parts, " ")
+	// `.px-done` is touched unconditionally after the CLI exits so the
+	// pipeline poller can advance regardless of gemini's exit code; pipeline
+	// stages (diffcheck, qa) judge success based on the actual repo state.
+	// Use `rc` not `status` — `status` is read-only in zsh.
+	return "rm -f .px-done\n" +
+		cmd + "\n" +
+		"rc=$?\n" +
+		"printf '$\\n'\n" +
+		"touch .px-done\n" +
+		"sleep 30\n" +
+		"exit $rc"
 }
 
 // classifyOutput matches Gemini output against known patterns.

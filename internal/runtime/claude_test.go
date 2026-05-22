@@ -26,7 +26,7 @@ func TestClaudeCodeRuntime_Capabilities(t *testing.T) {
 		t.Error("expected SupportsJsonOutput=true")
 	}
 	if !caps.SupportsLogFile {
-		t.Error("expected SupportsLogFile=true")
+		t.Error("expected SupportsLogFile=true (transcript captured via tee)")
 	}
 	if caps.MaxPromptLength != 0 {
 		t.Errorf("expected MaxPromptLength=0 (unlimited), got %d", caps.MaxPromptLength)
@@ -85,6 +85,15 @@ func TestClaudeCodeRuntime_Spawn(t *testing.T) {
 	}
 	if !strings.Contains(lastArg, "printf '$") {
 		t.Errorf("expected completion marker in command, got %q", lastArg)
+	}
+	if !strings.Contains(lastArg, "touch .px-done") {
+		t.Errorf("expected .px-done sentinel touch, got %q", lastArg)
+	}
+	if !strings.Contains(lastArg, "rm -f .px-done") {
+		t.Errorf("expected stale sentinel cleanup, got %q", lastArg)
+	}
+	if strings.Contains(lastArg, "status=$?") {
+		t.Errorf("must not assign to zsh read-only `status`; use `rc=$?`. cmd=%q", lastArg)
 	}
 }
 
@@ -160,8 +169,11 @@ func TestClaudeCodeRuntime_SpawnWithLogFile(t *testing.T) {
 
 	newCmd := mock.Commands[1]
 	lastArg := newCmd.Args[len(newCmd.Args)-1]
-	if !strings.Contains(lastArg, "--output-file") {
-		t.Errorf("expected --output-file flag, got %q", lastArg)
+	if strings.Contains(lastArg, "--output-file") {
+		t.Errorf("--output-file is not a real claude flag; expected tee redirect instead, got %q", lastArg)
+	}
+	if !strings.Contains(lastArg, "tee") {
+		t.Errorf("expected tee redirect for transcript capture, got %q", lastArg)
 	}
 	if !strings.Contains(lastArg, "PX_AGENT_TRANSCRIPT.log") {
 		t.Errorf("expected transcript log path in command, got %q", lastArg)

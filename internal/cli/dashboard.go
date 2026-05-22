@@ -40,6 +40,14 @@ func newDashboardCmd() *cobra.Command {
 	return cmd
 }
 
+// teaRunner is the function used to actually run the bubbletea program. Tests
+// override it to avoid touching the real terminal (which can deadlock under
+// -race when stdin/stdout are swapped concurrently with tea reading them).
+var teaRunner = func(p *tea.Program) error {
+	_, err := p.Run()
+	return err
+}
+
 func runTUIDashboard() error {
 	logPath := filepath.Join(app.stateDir, "logs")
 
@@ -56,8 +64,7 @@ func runTUIDashboard() error {
 	model := dashboard.New(cfg)
 	p := tea.NewProgram(model, tea.WithAltScreen())
 
-	_, err := p.Run()
-	return err
+	return teaRunner(p)
 }
 
 func runWebDashboard(ctx context.Context, port int, bind string) error {
@@ -94,10 +101,15 @@ func runWebDashboard(ctx context.Context, port int, bind string) error {
 	return srv.Start(ctx)
 }
 
+// browserGOOS reports the current operating system identifier. It is a
+// variable so tests can simulate non-darwin platforms without having to
+// cross-build.
+var browserGOOS = func() string { return runtime.GOOS }
+
 // openBrowser opens the URL in the default browser. Best-effort; no error on failure.
 func openBrowser(url string) {
 	var cmd *exec.Cmd
-	switch runtime.GOOS {
+	switch browserGOOS() {
 	case "darwin":
 		cmd = exec.Command("open", url)
 	case "linux":

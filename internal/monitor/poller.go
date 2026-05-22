@@ -3,6 +3,8 @@ package monitor
 import (
 	"context"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -16,6 +18,11 @@ import (
 )
 
 var pollerIdleRe = regexp.MustCompile(`(?m)^\$\s*$`)
+
+// completionSentinel is the filename a runtime touches in the worktree once
+// the agent has finished its turn successfully. The poller checks for it so
+// the pipeline can advance even after the tmux session has already exited.
+const completionSentinel = ".px-done"
 
 // PollerConfig holds configuration for the polling loop.
 type PollerConfig struct {
@@ -114,6 +121,14 @@ func (p *Poller) pollOnce(ctx context.Context, wg *sync.WaitGroup, active map[st
 		health := tmux.SessionHealth(p.runner, sessionName, "")
 
 		if health.Status == tmux.Dead || health.Status == tmux.Missing {
+			if sentinelExists(ag.WorktreePath) {
+				slog.Info("agent finished (sentinel after session exit)",
+					"story", ag.Assignment.StoryID,
+					"status", health.Status)
+				p.runPipelineForCompletedAgent(ctx, wg, ag, repoDir)
+				delete(active, sessionName)
+				continue
+			}
 			slog.Warn("agent session dead/missing", "story", ag.Assignment.StoryID, "status", health.Status)
 			p.emitAgentEvent(ag, health)
 			delete(active, sessionName)
@@ -147,40 +162,57 @@ func (p *Poller) pollOnce(ctx context.Context, wg *sync.WaitGroup, active map[st
 				continue
 			}
 		}
-		if !isAgentDone(output) {
+		if !isAgentDone(output) && !sentinelExists(ag.WorktreePath) {
 			continue
 		}
 
 		slog.Info("agent finished", "story", ag.Assignment.StoryID)
-		p.emitCompleted(ag)
-
-		wg.Add(1)
-		go func(a ActiveAgent) {
-			defer wg.Done()
-			p.mergeMu.Lock()
-			defer p.mergeMu.Unlock()
-
-			sc := pipeline.StoryContext{
-				StoryID:      a.Assignment.StoryID,
-				Branch:       a.Assignment.Branch,
-				WorktreePath: a.WorktreePath,
-				RepoDir:      repoDir,
-				AgentID:      a.Assignment.AgentID,
-				RuntimeName:  a.RuntimeName,
-				BaseBranch:   "main",
-			}
-			result, err := p.pipeline.Run(ctx, sc)
-			if err != nil {
-				slog.Error("pipeline error", "story", a.Assignment.StoryID, "error", err)
-			}
-			slog.Info("pipeline complete", "story", a.Assignment.StoryID, "result", result)
-		}(ag)
+		p.runPipelineForCompletedAgent(ctx, wg, ag, repoDir)
 
 		if p.watchdog != nil {
 			p.watchdog.ClearFingerprint(sessionName)
 		}
 		delete(active, sessionName)
 	}
+}
+
+// runPipelineForCompletedAgent emits the agent-finished event and dispatches
+// the pipeline goroutine. Shared between the in-session "$" sentinel path and
+// the post-exit `.px-done` sentinel path so the trigger logic stays in one
+// place.
+func (p *Poller) runPipelineForCompletedAgent(ctx context.Context, wg *sync.WaitGroup, ag ActiveAgent, repoDir string) {
+	p.emitCompleted(ag)
+	wg.Add(1)
+	go func(a ActiveAgent) {
+		defer wg.Done()
+		p.mergeMu.Lock()
+		defer p.mergeMu.Unlock()
+
+		sc := pipeline.StoryContext{
+			StoryID:      a.Assignment.StoryID,
+			Branch:       a.Assignment.Branch,
+			WorktreePath: a.WorktreePath,
+			RepoDir:      repoDir,
+			AgentID:      a.Assignment.AgentID,
+			RuntimeName:  a.RuntimeName,
+			BaseBranch:   "main",
+		}
+		result, err := p.pipeline.Run(ctx, sc)
+		if err != nil {
+			slog.Error("pipeline error", "story", a.Assignment.StoryID, "error", err)
+		}
+		slog.Info("pipeline complete", "story", a.Assignment.StoryID, "result", result)
+	}(ag)
+}
+
+// sentinelExists reports whether the runtime has written the completion
+// sentinel into the worktree. Empty worktreePath returns false.
+func sentinelExists(worktreePath string) bool {
+	if worktreePath == "" {
+		return false
+	}
+	_, err := os.Stat(filepath.Join(worktreePath, completionSentinel))
+	return err == nil
 }
 
 func isAgentDone(output string) bool {
