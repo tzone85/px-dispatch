@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tzone85/project-x/internal/state"
-	"github.com/tzone85/project-x/internal/web"
+	"github.com/tzone85/px-dispatch/internal/state"
+	"github.com/tzone85/px-dispatch/internal/web"
 )
 
 // freePort returns an OS-assigned free TCP port for binding the test server.
@@ -78,7 +78,7 @@ func TestWebAPI_EndToEnd(t *testing.T) {
 
 	t.Run("about reflects ServerConfig.Version", func(t *testing.T) {
 		body := getJSON(t, base+"/api/about")
-		if got, want := body["name"], "Project X"; got != want {
+		if got, want := body["name"], "px-dispatch"; got != want {
 			t.Errorf("name: got %v, want %v", got, want)
 		}
 		if got, want := body["version"], "test-1.2.3"; got != want {

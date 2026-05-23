@@ -3,9 +3,9 @@ package monitor
 import (
 	"testing"
 
-	"github.com/tzone85/project-x/internal/config"
-	"github.com/tzone85/project-x/internal/graph"
-	"github.com/tzone85/project-x/internal/planner"
+	"github.com/tzone85/px-dispatch/internal/config"
+	"github.com/tzone85/px-dispatch/internal/graph"
+	"github.com/tzone85/px-dispatch/internal/planner"
 )
 
 func TestDispatcher_DispatchWave_RootNodes(t *testing.T) {

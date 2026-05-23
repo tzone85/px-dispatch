@@ -1,6 +1,6 @@
 ---
 title: Web dashboard and API
-tags: [project-x, web, dashboard]
+tags: [px-dispatch, web, dashboard]
 ---
 
 # Web dashboard and API

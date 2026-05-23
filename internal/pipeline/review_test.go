@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/tzone85/project-x/internal/git"
-	"github.com/tzone85/project-x/internal/llm"
+	"github.com/tzone85/px-dispatch/internal/git"
+	"github.com/tzone85/px-dispatch/internal/llm"
 )
 
 func TestReviewStage_Name(t *testing.T) {

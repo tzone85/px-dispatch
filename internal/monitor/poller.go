@@ -10,11 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tzone85/project-x/internal/git"
-	"github.com/tzone85/project-x/internal/pipeline"
-	"github.com/tzone85/project-x/internal/runtime"
-	"github.com/tzone85/project-x/internal/state"
-	"github.com/tzone85/project-x/internal/tmux"
+	"github.com/tzone85/px-dispatch/internal/git"
+	"github.com/tzone85/px-dispatch/internal/pipeline"
+	"github.com/tzone85/px-dispatch/internal/runtime"
+	"github.com/tzone85/px-dispatch/internal/state"
+	"github.com/tzone85/px-dispatch/internal/tmux"
 )
 
 var pollerIdleRe = regexp.MustCompile(`(?m)^\$\s*$`)

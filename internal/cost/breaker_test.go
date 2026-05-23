@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/tzone85/project-x/internal/config"
-	"github.com/tzone85/project-x/internal/llm"
-	"github.com/tzone85/project-x/internal/state"
+	"github.com/tzone85/px-dispatch/internal/config"
+	"github.com/tzone85/px-dispatch/internal/llm"
+	"github.com/tzone85/px-dispatch/internal/state"
 )
 
 // mockLLMClient returns a fixed response.

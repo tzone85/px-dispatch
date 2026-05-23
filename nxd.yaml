@@ -1,7 +1,7 @@
 version: "1.0"
 
 workspace:
-  state_dir: ~/.nxd-project-x
+  state_dir: ~/.nxd-px-dispatch
   backend: sqlite
   log_level: info
 

@@ -6,7 +6,7 @@ builds:
     binary: px
     ldflags:
       - -s -w
-      - -X github.com/tzone85/project-x/internal/cli.version={{.Version}}
+      - -X github.com/tzone85/px-dispatch/internal/cli.version={{.Version}}
     env:
       - CGO_ENABLED=1
     goos:
@@ -38,4 +38,4 @@ changelog:
 release:
   github:
     owner: tzone85
-    name: project-x
+    name: px-dispatch

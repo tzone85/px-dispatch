@@ -7,16 +7,16 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/tzone85/project-x/internal/config"
-	"github.com/tzone85/project-x/internal/cost"
-	"github.com/tzone85/project-x/internal/git"
-	"github.com/tzone85/project-x/internal/graph"
-	"github.com/tzone85/project-x/internal/llm"
-	"github.com/tzone85/project-x/internal/monitor"
-	"github.com/tzone85/project-x/internal/pipeline"
-	"github.com/tzone85/project-x/internal/planner"
-	"github.com/tzone85/project-x/internal/state"
-	"github.com/tzone85/project-x/internal/tmux"
+	"github.com/tzone85/px-dispatch/internal/config"
+	"github.com/tzone85/px-dispatch/internal/cost"
+	"github.com/tzone85/px-dispatch/internal/git"
+	"github.com/tzone85/px-dispatch/internal/graph"
+	"github.com/tzone85/px-dispatch/internal/llm"
+	"github.com/tzone85/px-dispatch/internal/monitor"
+	"github.com/tzone85/px-dispatch/internal/pipeline"
+	"github.com/tzone85/px-dispatch/internal/planner"
+	"github.com/tzone85/px-dispatch/internal/state"
+	"github.com/tzone85/px-dispatch/internal/tmux"
 )
 
 // setupTestStores creates ephemeral file-based event store and SQLite

@@ -1,12 +1,12 @@
 ---
 title: Conflict resolution and rebase guard
-tags: [project-x, rebase, conflicts]
+tags: [px-dispatch, rebase, conflicts]
 ---
 
 # Conflict resolution and rebase guard
 
 When two stories touch the same file, the rebase stage produces conflicts.
-Project X resolves them with an LLM rather than aborting back to the user.
+px-dispatch resolves them with an LLM rather than aborting back to the user.
 
 ## Flow
 

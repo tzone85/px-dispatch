@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tzone85/project-x/migrations"
+	"github.com/tzone85/px-dispatch/migrations"
 )
 
 // migrationFile pairs a version number with its filename for sorting.

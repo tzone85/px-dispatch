@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/tzone85/project-x/internal/git"
+	"github.com/tzone85/px-dispatch/internal/git"
 )
 
 // AutoCommitStage stages and commits any uncommitted changes in the worktree.

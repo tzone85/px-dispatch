@@ -1,6 +1,6 @@
 ---
 title: Open questions and future work
-tags: [project-x, future]
+tags: [px-dispatch, future]
 ---
 
 # Open questions and future work
@@ -30,7 +30,7 @@ Honest list of what's not solved yet.
 ## Knowledge retrieval (MemPalace-lite)
 
 - **No memory retrieval for agents.** `vortex-dispatch` has MemPalace
-  (Python CLI vector-searching wing/room structure). Project X could
+  (Python CLI vector-searching wing/room structure). px-dispatch could
   expose this by reading SHARED_LEARNINGS.md and the obsidian vault as a
   context blob, but the right answer is the retrieval layer.
 

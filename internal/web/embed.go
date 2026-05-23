@@ -4,7 +4,7 @@ import (
 	"io/fs"
 	"net/http"
 
-	webfs "github.com/tzone85/project-x/web"
+	webfs "github.com/tzone85/px-dispatch/web"
 )
 
 // staticFS is the embedded filesystem containing dashboard static assets.

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tzone85/project-x/internal/state"
+	"github.com/tzone85/px-dispatch/internal/state"
 )
 
 // --- agents ------------------------------------------------------------------

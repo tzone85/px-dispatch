@@ -1,6 +1,6 @@
 ---
 title: Lessons from pilots
-tags: [project-x, pilots, learnings]
+tags: [px-dispatch, pilots, learnings]
 ---
 
 # Lessons from pilots
@@ -10,7 +10,7 @@ here as they emerge.
 
 ## VXD tic-tac-toe (2026-05-22, from SHARED_LEARNINGS.md)
 
-5 issues, all ported to Project X as fixes BEFORE our own pilots ran:
+5 issues, all ported to px-dispatch as fixes BEFORE our own pilots ran:
 
 1. **YAML int-key gotcha.** Map keys must be bare ints (`5: 60`), not
    strings (`"5": 60`).
@@ -25,7 +25,7 @@ here as they emerge.
    → Fixed by spec-compliance gate in
    [[04-Pipeline-stages-walkthrough|review stage]].
 
-## Project X E2E verification (2026-05-22)
+## px-dispatch E2E verification (2026-05-22)
 
 Three independent bugs surfaced via the `/version` endpoint pilot:
 

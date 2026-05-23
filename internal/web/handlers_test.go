@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/tzone85/project-x/internal/state"
+	"github.com/tzone85/px-dispatch/internal/state"
 )
 
 // setupTestHandlers creates in-memory stores and returns a configured Handlers.
@@ -678,8 +678,8 @@ func TestGetAbout(t *testing.T) {
 	if err := json.NewDecoder(w.Body).Decode(&result); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if result.Name != "Project X" {
-		t.Errorf("Name: got %q, want %q", result.Name, "Project X")
+	if result.Name != "px-dispatch" {
+		t.Errorf("Name: got %q, want %q", result.Name, "px-dispatch")
 	}
 	if result.Version != "v9.9.9" {
 		t.Errorf("Version: got %q, want %q", result.Version, "v9.9.9")

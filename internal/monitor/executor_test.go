@@ -7,12 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tzone85/project-x/internal/agent"
-	"github.com/tzone85/project-x/internal/config"
-	"github.com/tzone85/project-x/internal/git"
-	"github.com/tzone85/project-x/internal/planner"
-	"github.com/tzone85/project-x/internal/runtime"
-	"github.com/tzone85/project-x/internal/state"
+	"github.com/tzone85/px-dispatch/internal/agent"
+	"github.com/tzone85/px-dispatch/internal/config"
+	"github.com/tzone85/px-dispatch/internal/git"
+	"github.com/tzone85/px-dispatch/internal/planner"
+	"github.com/tzone85/px-dispatch/internal/runtime"
+	"github.com/tzone85/px-dispatch/internal/state"
 )
 
 // mockEventStore is a minimal EventStore for testing.

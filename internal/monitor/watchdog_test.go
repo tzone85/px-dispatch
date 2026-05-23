@@ -3,8 +3,8 @@ package monitor
 import (
 	"testing"
 
-	"github.com/tzone85/project-x/internal/git"
-	"github.com/tzone85/project-x/internal/runtime"
+	"github.com/tzone85/px-dispatch/internal/git"
+	"github.com/tzone85/px-dispatch/internal/runtime"
 )
 
 func TestWatchdog_PermissionBypass(t *testing.T) {

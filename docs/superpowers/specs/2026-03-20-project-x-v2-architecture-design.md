@@ -1,13 +1,13 @@
-# Project X (px) — V2 Architecture Design Spec
+# px-dispatch (px) — V2 Architecture Design Spec
 
 **Date:** 2026-03-20
 **Author:** Mncedimini + Claude
-**Repo:** github.com/tzone85/project-x
+**Repo:** github.com/tzone85/px-dispatch
 **Status:** Approved
 
 ## Overview
 
-Project X (`px`) is a clean-slate successor to Vortex Dispatch (VXD), an AI agent orchestration CLI that drives the full software development lifecycle — from natural-language requirements to merged PRs. Project X takes VXD's proven architecture and addresses critical pain points around cost protection, session reliability, observability, pipeline resilience, and open-source readiness.
+px-dispatch (`px`) is a clean-slate successor to Vortex Dispatch (VXD), an AI agent orchestration CLI that drives the full software development lifecycle — from natural-language requirements to merged PRs. px-dispatch takes VXD's proven architecture and addresses critical pain points around cost protection, session reliability, observability, pipeline resilience, and open-source readiness.
 
 ### Goals
 
@@ -442,7 +442,7 @@ Note: Direct Anthropic/OpenAI API calls are handled by the `llm` client layer, n
 ### Project Layout
 
 ```
-project-x/
+px-dispatch/
 ├── cmd/px/main.go
 ├── internal/
 │   ├── agent/          # Roles, prompts, scoring

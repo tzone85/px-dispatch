@@ -1,11 +1,11 @@
 ---
 title: Agent prompts and DDD+TDD enforcement
-tags: [project-x, prompts, ddd, tdd]
+tags: [px-dispatch, prompts, ddd, tdd]
 ---
 
 # Agent prompts and DDD+TDD enforcement
 
-Agent prompts are where Project X enforces engineering standards. They live
+Agent prompts are where px-dispatch enforces engineering standards. They live
 in `internal/agent/prompts.go`; the diagnostic playbooks they inject live in
 `internal/agent/diagnostics.go`. Both were ported from `vortex-dispatch`
 (see `SHARED_LEARNINGS.md` for lineage).

@@ -9,13 +9,13 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
-	"github.com/tzone85/project-x/internal/git"
-	"github.com/tzone85/project-x/internal/graph"
-	"github.com/tzone85/project-x/internal/monitor"
-	"github.com/tzone85/project-x/internal/pipeline"
-	"github.com/tzone85/project-x/internal/planner"
-	"github.com/tzone85/project-x/internal/runtime"
-	"github.com/tzone85/project-x/internal/state"
+	"github.com/tzone85/px-dispatch/internal/git"
+	"github.com/tzone85/px-dispatch/internal/graph"
+	"github.com/tzone85/px-dispatch/internal/monitor"
+	"github.com/tzone85/px-dispatch/internal/pipeline"
+	"github.com/tzone85/px-dispatch/internal/planner"
+	"github.com/tzone85/px-dispatch/internal/runtime"
+	"github.com/tzone85/px-dispatch/internal/state"
 )
 
 func newResumeCmd() *cobra.Command {

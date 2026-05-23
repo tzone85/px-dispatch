@@ -4,7 +4,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/tzone85/project-x/internal/llm"
+	"github.com/tzone85/px-dispatch/internal/llm"
 )
 
 const (

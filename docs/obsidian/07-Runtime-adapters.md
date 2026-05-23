@@ -1,6 +1,6 @@
 ---
 title: Runtime adapters
-tags: [project-x, runtime]
+tags: [px-dispatch, runtime]
 ---
 
 # Runtime adapters

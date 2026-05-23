@@ -1,18 +1,18 @@
 ---
-title: Project X · Systematic Walkthrough
-tags: [project-x, index]
+title: px-dispatch · Systematic Walkthrough
+tags: [px-dispatch, index]
 ---
 
-# Project X · Systematic Walkthrough
+# px-dispatch · Systematic Walkthrough
 
-**Repo:** [github.com/tzone85/project-x](https://github.com/tzone85/project-x)
-**Local path:** `/Users/mncedimini/Sites/misc/project-x`
+**Repo:** [github.com/tzone85/px-dispatch](https://github.com/tzone85/px-dispatch)
+**Local path:** `/Users/mncedimini/Sites/misc/px-dispatch`
 
 This vault is the top-to-bottom map of the system. Read in order, or jump.
 
 ## Reading order
 
-1. [[01-What-Project-X-is]]
+1. [[01-What-px-dispatch-is]]
 2. [[02-Architecture-at-a-glance]]
 3. [[03-Agent-prompts-and-DDD-TDD-enforcement]]
 4. [[04-Pipeline-stages-walkthrough]]

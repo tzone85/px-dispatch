@@ -1,6 +1,6 @@
 ---
 title: Architecture at a glance
-tags: [project-x, architecture]
+tags: [px-dispatch, architecture]
 ---
 
 # Architecture at a glance

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/tzone85/project-x/internal/llm"
+	"github.com/tzone85/px-dispatch/internal/llm"
 )
 
 // mockStoryResponse returns a valid JSON response for story decomposition.

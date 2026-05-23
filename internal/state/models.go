@@ -1,5 +1,5 @@
 // Package state defines the core domain models, event types, and store
-// interfaces for the event-sourced architecture of Project X.
+// interfaces for the event-sourced architecture of px-dispatch.
 package state
 
 // Requirement represents a user-submitted requirement.

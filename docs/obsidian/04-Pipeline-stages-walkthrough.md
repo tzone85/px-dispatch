@@ -1,6 +1,6 @@
 ---
 title: Pipeline stages walkthrough
-tags: [project-x, pipeline]
+tags: [px-dispatch, pipeline]
 ---
 
 # Pipeline stages walkthrough

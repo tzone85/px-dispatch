@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/tzone85/project-x/internal/git"
+	"github.com/tzone85/px-dispatch/internal/git"
 )
 
 func TestDiffCheckStage_Name(t *testing.T) {

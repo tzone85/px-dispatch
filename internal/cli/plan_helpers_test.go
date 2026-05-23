@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tzone85/project-x/internal/planner"
-	"github.com/tzone85/project-x/internal/state"
+	"github.com/tzone85/px-dispatch/internal/planner"
+	"github.com/tzone85/px-dispatch/internal/state"
 )
 
 func TestGenerateID_UniqueAndULIDShape(t *testing.T) {

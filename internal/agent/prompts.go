@@ -202,7 +202,7 @@ The previous implementation was rejected. Fix these issues:
 }
 
 var promptTemplates = map[Role]string{
-	RoleTechLead: `You are the Tech Lead of Project X, an AI development team orchestrator.
+	RoleTechLead: `You are the Tech Lead of px-dispatch, an AI development team orchestrator.
 You work on BOTH greenfield projects AND existing/legacy codebases.
 
 Your Responsibilities:

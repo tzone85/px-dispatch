@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tzone85/project-x/internal/state"
+	"github.com/tzone85/px-dispatch/internal/state"
 )
 
 func TestCapitalize(t *testing.T) {

@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tzone85/project-x/internal/state"
+	"github.com/tzone85/px-dispatch/internal/state"
 )
 
 // findFreePort returns a port that is currently not in use.

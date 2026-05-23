@@ -1,6 +1,6 @@
 ---
 title: Operating the system
-tags: [project-x, ops, how-to]
+tags: [px-dispatch, ops, how-to]
 ---
 
 # Operating the system
@@ -10,7 +10,7 @@ Practical guide to using `px` day-to-day.
 ## First-time setup
 
 ```bash
-go install github.com/tzone85/project-x/cmd/px@latest
+go install github.com/tzone85/px-dispatch/cmd/px@latest
 px migrate
 px config show
 ```

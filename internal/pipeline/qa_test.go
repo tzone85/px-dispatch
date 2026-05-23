@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tzone85/project-x/internal/git"
+	"github.com/tzone85/px-dispatch/internal/git"
 )
 
 func TestQAStage_Name(t *testing.T) {

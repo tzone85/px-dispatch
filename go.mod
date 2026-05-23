@@ -1,4 +1,4 @@
-module github.com/tzone85/project-x
+module github.com/tzone85/px-dispatch
 
 go 1.26.1
 

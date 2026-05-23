@@ -1,5 +1,5 @@
 // Package dashboard provides a scrollable TUI dashboard for observing
-// the Project X pipeline, agents, events, escalations, costs, and logs.
+// the px-dispatch pipeline, agents, events, escalations, costs, and logs.
 package dashboard
 
 import (

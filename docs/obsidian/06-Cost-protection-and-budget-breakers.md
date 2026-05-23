@@ -1,11 +1,11 @@
 ---
 title: Cost protection and budget breakers
-tags: [project-x, cost, budget]
+tags: [px-dispatch, cost, budget]
 ---
 
 # Cost protection and budget breakers
 
-Project X spends money on every LLM call. The cost protection layer makes
+px-dispatch spends money on every LLM call. The cost protection layer makes
 that bounded.
 
 ## Three layers

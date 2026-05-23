@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tzone85/project-x/internal/state"
+	"github.com/tzone85/px-dispatch/internal/state"
 )
 
 // startTime records when the server process started, for the health endpoint.
@@ -48,7 +48,7 @@ type aboutResponse struct {
 // projectAbout is the immutable canonical description served by /api/about.
 // Mirrors README.md and is verified by tests so the two cannot drift silently.
 var projectAbout = aboutResponse{
-	Name:    "Project X",
+	Name:    "px-dispatch",
 	Tagline: "Autonomous AI agent orchestration for the full software development lifecycle.",
 	Description: "px decomposes natural-language requirements into atomic stories, " +
 		"dispatches AI coding agents across parallel waves, and drives each story through " +
@@ -75,7 +75,7 @@ var projectAbout = aboutResponse{
 		"cleanup",
 	},
 	Runtimes: []string{"claude-code", "codex", "gemini"},
-	Repo:     "https://github.com/tzone85/project-x",
+	Repo:     "https://github.com/tzone85/px-dispatch",
 	Docs:     "/docs/architecture.md",
 	License:  "Apache-2.0",
 }
