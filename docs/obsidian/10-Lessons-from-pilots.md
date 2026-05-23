@@ -69,3 +69,17 @@ When a pilot surfaces a real issue:
 
 Cross-link to `SHARED_LEARNINGS.md` at the misc root for the longer-form
 record across sibling projects.
+
+### Finding 2 (2026-05-23): Review LLM call hangs without timeout
+
+Story 1 of Connect-4 (scaffold) made it past autocommit/diffcheck but the
+review stage's LLM call sat for 50+ minutes on a large scaffold diff with no
+upstream timeout. The pipeline did not abort; the context just waited.
+
+**Fix:** `internal/pipeline/review.go` now wraps the `Complete` call in
+`context.WithTimeout(ctx, 10*time.Minute)`. A timed-out review is
+`StageFailed` (retryable) so the pipeline can redispatch with a fresh agent
+or a slimmer prompt.
+
+**Follow-up:** consider chunking very large diffs (>2k lines) into per-file
+review passes so the LLM doesn't see a single oversized prompt.

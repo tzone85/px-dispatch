@@ -4,10 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/tzone85/project-x/internal/git"
 	"github.com/tzone85/project-x/internal/llm"
 )
+
+// reviewLLMTimeout caps the time a single review LLM call may take. Large
+// scaffolding diffs can otherwise hang for an hour. Failed-with-timeout is
+// retryable.
+const reviewLLMTimeout = 10 * time.Minute
 
 // reviewResponse is the expected JSON structure from the LLM review.
 type reviewResponse struct {
@@ -56,7 +62,9 @@ func (s *ReviewStage) Execute(ctx context.Context, sc StoryContext) (StageResult
 	}
 
 	prompt := buildReviewPrompt(sc.StoryID, sc.StoryTitle, sc.StoryDescription, sc.AcceptanceCriteria, sc.OwnedFiles, diff, fileTree)
-	resp, err := s.llmClient.Complete(ctx, llm.CompletionRequest{
+	llmCtx, cancel := context.WithTimeout(ctx, reviewLLMTimeout)
+	defer cancel()
+	resp, err := s.llmClient.Complete(llmCtx, llm.CompletionRequest{
 		System: reviewerSystemPrompt,
 		Messages: []llm.Message{
 			{Role: llm.RoleUser, Content: prompt},
