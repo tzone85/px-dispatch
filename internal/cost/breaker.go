@@ -116,7 +116,10 @@ func (b *BudgetBreaker) checkBudgets() error {
 		}
 	}
 
-	today := time.Now().UTC().Format("2006-01-02")
+	// Use local time to match the localtime-aware SQL in ledger.QueryByDay.
+	// Mixing UTC here with localtime there silently returned zero on the
+	// day-boundary in non-UTC zones (e.g. SAST=UTC+2).
+	today := time.Now().Format("2006-01-02")
 	dayCost, err := b.ledger.QueryByDay(today)
 	if err != nil {
 		return err
@@ -155,7 +158,10 @@ func (b *BudgetBreaker) emitWarningsIfNeeded() {
 	}
 
 	// Check daily budget warning.
-	today := time.Now().UTC().Format("2006-01-02")
+	// Use local time to match the localtime-aware SQL in ledger.QueryByDay.
+	// Mixing UTC here with localtime there silently returned zero on the
+	// day-boundary in non-UTC zones (e.g. SAST=UTC+2).
+	today := time.Now().Format("2006-01-02")
 	dayCost, err := b.ledger.QueryByDay(today)
 	if err == nil && dayCost >= b.budgetCfg.MaxCostPerDayUSD*thresholdPct {
 		pct := int(dayCost / b.budgetCfg.MaxCostPerDayUSD * 100)
