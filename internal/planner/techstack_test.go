@@ -3,7 +3,7 @@ package planner
 import (
 	"testing"
 
-	"github.com/tzone85/project-x/internal/git"
+	"github.com/tzone85/px-dispatch/internal/git"
 )
 
 func TestFormatTechStack_AllFields(t *testing.T) {

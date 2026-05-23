@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tzone85/project-x/internal/llm"
-	"github.com/tzone85/project-x/internal/state"
+	"github.com/tzone85/px-dispatch/internal/llm"
+	"github.com/tzone85/px-dispatch/internal/state"
 )
 
 // stubLLM returns canned planner JSON responses.

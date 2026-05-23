@@ -3,7 +3,7 @@ package planner
 import (
 	"fmt"
 
-	"github.com/tzone85/project-x/internal/graph"
+	"github.com/tzone85/px-dispatch/internal/graph"
 )
 
 // Validate checks a list of planned stories for quality issues.

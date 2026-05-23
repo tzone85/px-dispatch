@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/tzone85/project-x/internal/config"
+	"github.com/tzone85/px-dispatch/internal/config"
 )
 
 // withEnv sets an env var for the duration of a test.

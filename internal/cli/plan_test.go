@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/tzone85/project-x/internal/planner"
+	"github.com/tzone85/px-dispatch/internal/planner"
 )
 
 func TestScopeStoriesForRequirement(t *testing.T) {

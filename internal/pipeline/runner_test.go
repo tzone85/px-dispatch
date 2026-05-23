@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/tzone85/project-x/internal/config"
-	"github.com/tzone85/project-x/internal/state"
+	"github.com/tzone85/px-dispatch/internal/config"
+	"github.com/tzone85/px-dispatch/internal/state"
 )
 
 // errTestSentinel is a known error value used to verify error propagation.

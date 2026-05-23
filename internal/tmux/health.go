@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/tzone85/project-x/internal/git"
+	"github.com/tzone85/px-dispatch/internal/git"
 )
 
 // HealthStatus represents the health state of a tmux session.

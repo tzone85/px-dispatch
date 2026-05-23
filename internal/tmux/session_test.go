@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tzone85/project-x/internal/git"
+	"github.com/tzone85/px-dispatch/internal/git"
 )
 
 func contains(args []string, target string) bool {

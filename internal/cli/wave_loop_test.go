@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tzone85/project-x/internal/graph"
-	"github.com/tzone85/project-x/internal/monitor"
-	"github.com/tzone85/project-x/internal/planner"
-	"github.com/tzone85/project-x/internal/state"
+	"github.com/tzone85/px-dispatch/internal/graph"
+	"github.com/tzone85/px-dispatch/internal/monitor"
+	"github.com/tzone85/px-dispatch/internal/planner"
+	"github.com/tzone85/px-dispatch/internal/state"
 )
 
 // --- mocks -----------------------------------------------------------------

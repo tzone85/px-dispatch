@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/tzone85/project-x/internal/state"
+	"github.com/tzone85/px-dispatch/internal/state"
 )
 
 // costData holds pre-queried cost information for rendering.
@@ -32,7 +32,7 @@ func queryCostData(db *sql.DB, requirements []state.Requirement, dailyLimit floa
 
 	// Query daily total.
 	row := db.QueryRow(
-		"SELECT COALESCE(SUM(cost_usd), 0) FROM token_usage WHERE date(created_at) = date('now')",
+		"SELECT COALESCE(SUM(cost_usd), 0) FROM token_usage WHERE date(created_at, 'localtime') = date('now', 'localtime')",
 	)
 	if err := row.Scan(&data.dailyTotal); err != nil {
 		data.dailyTotal = 0

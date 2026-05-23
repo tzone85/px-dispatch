@@ -1,7 +1,7 @@
 version: "1"
 
 workspace:
-  state_dir: "/tmp/project-x-vhs-demo"
+  state_dir: "/tmp/px-dispatch-vhs-demo"
   backend: sqlite
   log_level: info
 

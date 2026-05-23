@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/tzone85/project-x/internal/modelswitch"
+	"github.com/tzone85/px-dispatch/internal/modelswitch"
 )
 
 var modelSwitchApprover = newCLIModelSwitchApprover()

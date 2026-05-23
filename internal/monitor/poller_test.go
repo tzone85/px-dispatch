@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tzone85/project-x/internal/git"
-	"github.com/tzone85/project-x/internal/pipeline"
+	"github.com/tzone85/px-dispatch/internal/git"
+	"github.com/tzone85/px-dispatch/internal/pipeline"
 )
 
 // mockPipelineRunner records calls.

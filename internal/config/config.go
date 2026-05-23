@@ -1,10 +1,10 @@
-// Package config provides typed configuration for Project X with defaults,
+// Package config provides typed configuration for px-dispatch with defaults,
 // validation, and YAML loading.
 package config
 
 import "fmt"
 
-// Config is the top-level configuration for Project X.
+// Config is the top-level configuration for px-dispatch.
 type Config struct {
 	Version   string                   `yaml:"version"`
 	Workspace WorkspaceConfig          `yaml:"workspace"`

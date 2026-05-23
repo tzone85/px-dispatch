@@ -109,18 +109,45 @@ func buildCLIPrompt(req CompletionRequest) string {
 	return strings.Join(parts, "\n\n")
 }
 
-// buildStrippedEnv returns a copy of the current environment with ANTHROPIC_API_KEY
-// removed. This forces the Claude CLI to use the subscription rather than API credits.
+// envAllowlist is the set of environment variables that survive into the
+// claude CLI subprocess. Everything else is stripped to prevent secrets
+// (OPENAI_API_KEY, GH_TOKEN, GEMINI_API_KEY, etc.) from being inherited and
+// then echoed into transcripts or surfaced through the dashboard logs API.
+// PATH is required so claude can find git / npm / etc. when the agent runs
+// shell tools. HOME / USER / SHELL / TMPDIR / TERM / LANG / LC_* support
+// normal CLI behaviour. CI=true is preserved for CI environments that gate
+// behaviour on it.
+var envAllowlist = map[string]bool{
+	"PATH": true, "HOME": true, "USER": true, "LOGNAME": true,
+	"SHELL": true, "TMPDIR": true, "TERM": true,
+	"LANG": true, "LC_ALL": true, "LC_CTYPE": true,
+	"PWD": true, "OLDPWD": true,
+	"CI": true,
+	// Subscription auth — Claude CLI reads its own config from ~/.claude/,
+	// not from env, so no API key needs to pass.
+}
+
+// buildStrippedEnv returns the environment to pass to the claude subprocess.
+// It uses an allowlist (not a denylist) so any future secret added to the
+// operator's shell environment cannot accidentally leak through.
+// LC_* variables are preserved by prefix match because the locale set varies
+// by host.
 func buildStrippedEnv() []string {
 	env := os.Environ()
 	filtered := make([]string, 0, len(env))
-
 	for _, e := range env {
-		if !strings.HasPrefix(e, "ANTHROPIC_API_KEY=") {
+		key := e
+		if eq := strings.IndexByte(e, '='); eq >= 0 {
+			key = e[:eq]
+		}
+		if envAllowlist[key] {
+			filtered = append(filtered, e)
+			continue
+		}
+		if strings.HasPrefix(key, "LC_") {
 			filtered = append(filtered, e)
 		}
 	}
-
 	return filtered
 }
 

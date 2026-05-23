@@ -3,8 +3,8 @@
 package runtime
 
 import (
-	"github.com/tzone85/project-x/internal/git"
-	"github.com/tzone85/project-x/internal/tmux"
+	"github.com/tzone85/px-dispatch/internal/git"
+	"github.com/tzone85/px-dispatch/internal/tmux"
 )
 
 // AgentStatus represents the detected state of an agent session.

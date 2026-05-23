@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/tzone85/project-x/internal/config"
-	"github.com/tzone85/project-x/internal/logging"
-	"github.com/tzone85/project-x/internal/state"
+	"github.com/tzone85/px-dispatch/internal/config"
+	"github.com/tzone85/px-dispatch/internal/logging"
+	"github.com/tzone85/px-dispatch/internal/state"
 )
 
 var (
@@ -49,7 +49,7 @@ func shouldSkipInit(cmd *cobra.Command) bool {
 func NewRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "px",
-		Short: "Project X — AI agent orchestration for the full SDLC",
+		Short: "px-dispatch — AI agent orchestration for the full SDLC",
 		Long:  "Orchestrate autonomous AI agents from requirements to merged PRs.",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			if shouldSkipInit(cmd) {

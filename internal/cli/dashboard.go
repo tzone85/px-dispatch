@@ -12,9 +12,9 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
-	"github.com/tzone85/project-x/internal/dashboard"
-	"github.com/tzone85/project-x/internal/state"
-	"github.com/tzone85/project-x/internal/web"
+	"github.com/tzone85/px-dispatch/internal/dashboard"
+	"github.com/tzone85/px-dispatch/internal/state"
+	"github.com/tzone85/px-dispatch/internal/web"
 )
 
 func newDashboardCmd() *cobra.Command {

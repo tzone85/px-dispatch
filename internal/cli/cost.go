@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/tzone85/project-x/internal/cost"
-	"github.com/tzone85/project-x/internal/state"
+	"github.com/tzone85/px-dispatch/internal/cost"
+	"github.com/tzone85/px-dispatch/internal/state"
 )
 
 func newCostCmd() *cobra.Command {

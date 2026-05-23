@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/tzone85/project-x/internal/state"
+	"github.com/tzone85/px-dispatch/internal/state"
 )
 
 // ServerConfig holds web dashboard configuration.

@@ -1,4 +1,4 @@
-# Project X — Architecture Reference
+# px-dispatch — Architecture Reference
 
 > Canonical architecture doc. The README gives the elevator pitch; this is for
 > **engineers who need to understand or extend the system**. Diagrams are
@@ -9,7 +9,7 @@
 
 ## 1. Component layout
 
-![Project X component architecture](../../diagrams/architecture.svg)
+![px-dispatch component architecture](../../diagrams/architecture.svg)
 
 Each box is a Go package under `internal/`. Arrows are in-process function
 calls. There are **no circular dependencies** — every package interaction goes
@@ -40,7 +40,7 @@ the event log directly.
 
 ## 2. Requirement → merged PR sequence
 
-![Project X sequence diagram](../../diagrams/sequence.svg)
+![px-dispatch sequence diagram](../../diagrams/sequence.svg)
 
 Worth noting:
 

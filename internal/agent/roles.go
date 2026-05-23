@@ -1,8 +1,8 @@
 // Package agent defines agent roles, complexity-based routing, and prompt
-// generation for the Project X multi-agent development system.
+// generation for the px-dispatch multi-agent development system.
 package agent
 
-import "github.com/tzone85/project-x/internal/config"
+import "github.com/tzone85/px-dispatch/internal/config"
 
 // Role represents an agent's role in the development team hierarchy.
 type Role string

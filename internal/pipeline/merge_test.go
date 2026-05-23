@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tzone85/project-x/internal/git"
+	"github.com/tzone85/px-dispatch/internal/git"
 )
 
 func TestMergeStage_Name(t *testing.T) {

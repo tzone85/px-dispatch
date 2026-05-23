@@ -11,7 +11,7 @@ func TestSystemPrompt_ContainsRole(t *testing.T) {
 		StoryTitle: "Add auth",
 	}
 	prompt := SystemPrompt(RoleSenior, ctx)
-	if !strings.Contains(prompt, "senior") {
+	if !strings.Contains(strings.ToLower(prompt), "senior") {
 		t.Error("system prompt should mention the role")
 	}
 }

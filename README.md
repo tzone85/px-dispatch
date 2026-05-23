@@ -1,4 +1,4 @@
-# Project X (`px`)
+# px-dispatch (`px`)
 
 **Autonomous AI agent orchestration for the full software development lifecycle.**
 
@@ -103,13 +103,13 @@ The repo also includes the same settings in [`px.config.example.yaml`](px.config
 
 ```bash
 # From source (recommended)
-git clone https://github.com/tzone85/project-x.git
-cd project-x
+git clone https://github.com/tzone85/px-dispatch.git
+cd px-dispatch
 make build
 sudo mv px /usr/local/bin/
 
 # Or via go install
-go install github.com/tzone85/project-x/cmd/px@latest
+go install github.com/tzone85/px-dispatch/cmd/px@latest
 ```
 
 ### First Run
@@ -262,7 +262,7 @@ See [`px.config.example.yaml`](px.config.example.yaml) for all options with inli
 </p>
 
 ```
-project-x/
+px-dispatch/
 ├── cmd/px/              # CLI entry point
 ├── internal/
 │   ├── agent/           # Agent roles, prompts, complexity routing
@@ -405,8 +405,8 @@ Built-in runtimes: `ClaudeCodeRuntime`, `CodexRuntime`, `GeminiRuntime`. To add 
 
 ```bash
 # Clone
-git clone https://github.com/tzone85/project-x.git
-cd project-x
+git clone https://github.com/tzone85/px-dispatch.git
+cd px-dispatch
 
 # Build
 make build

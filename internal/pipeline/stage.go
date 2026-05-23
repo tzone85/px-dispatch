@@ -35,14 +35,18 @@ func (r StageResult) String() string {
 // StoryContext carries the state needed for pipeline stages to operate on a story.
 // This struct is immutable by convention; stages must not modify it.
 type StoryContext struct {
-	StoryID      string
-	ReqID        string
-	Branch       string
-	WorktreePath string
-	RepoDir      string
-	AgentID      string
-	RuntimeName  string
-	BaseBranch   string
+	StoryID            string
+	ReqID              string
+	Branch             string
+	WorktreePath       string
+	RepoDir            string
+	AgentID            string
+	RuntimeName        string
+	BaseBranch         string
+	StoryTitle         string   // Optional: passed through to the review stage.
+	StoryDescription   string   // Optional: lets reviewers judge intent.
+	AcceptanceCriteria string   // Optional: enforces the spec-compliance gate.
+	OwnedFiles         []string // Files the spec asked the agent to produce/own.
 }
 
 // Stage is a single step in the post-execution pipeline.

@@ -3,7 +3,7 @@ package planner
 import (
 	"strings"
 
-	"github.com/tzone85/project-x/internal/git"
+	"github.com/tzone85/px-dispatch/internal/git"
 )
 
 // FormatTechStack formats a git.TechStack into a string suitable for

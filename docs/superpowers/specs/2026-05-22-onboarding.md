@@ -1,4 +1,4 @@
-# Project X — Onboarding
+# px-dispatch — Onboarding
 
 A new engineer should be able to clone the repo, follow this doc, and ship a
 real change inside an afternoon. No tribal knowledge required.
@@ -40,8 +40,8 @@ Optional: `codex`, `gemini` (alternate runtimes), `golangci-lint` (lint),
 ## 3. First build, first test, first run
 
 ```bash
-git clone https://github.com/tzone85/project-x.git
-cd project-x
+git clone https://github.com/tzone85/px-dispatch.git
+cd px-dispatch
 
 # 1. Build
 make build              # outputs ./px
@@ -172,7 +172,7 @@ That's the rhythm.
 
 - Read `docs/superpowers/specs/2026-05-22-architecture-reference.md` for the
   full deep dive.
-- Read `docs/superpowers/specs/2026-03-20-project-x-v2-architecture-design.md`
+- Read `docs/superpowers/specs/2026-03-20-px-dispatch-v2-architecture-design.md`
   for the original v2 design decisions.
 - Browse `internal/state/events.go` to see every event the system can emit.
 - Run `./px events --limit 100` after `px resume` to watch the audit trail.

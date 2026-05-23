@@ -1,5 +1,5 @@
 // Package monitor provides wave-based dispatching and execution of stories
-// within the Project X multi-agent development system. The Dispatcher
+// within the px-dispatch multi-agent development system. The Dispatcher
 // determines which stories are ready based on DAG dependencies and assigns
 // them to agent roles. The Executor creates isolated worktrees and spawns
 // runtime sessions.
@@ -10,10 +10,10 @@ import (
 	"sort"
 
 	"github.com/oklog/ulid/v2"
-	"github.com/tzone85/project-x/internal/agent"
-	"github.com/tzone85/project-x/internal/config"
-	"github.com/tzone85/project-x/internal/graph"
-	"github.com/tzone85/project-x/internal/planner"
+	"github.com/tzone85/px-dispatch/internal/agent"
+	"github.com/tzone85/px-dispatch/internal/config"
+	"github.com/tzone85/px-dispatch/internal/graph"
+	"github.com/tzone85/px-dispatch/internal/planner"
 )
 
 // Assignment represents a story dispatched to an agent with its role,

@@ -1,21 +1,21 @@
-# Project X (px) Implementation Plan
+# px-dispatch (px) Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build Project X (`px`), a production-grade CLI that orchestrates autonomous AI agents through the full SDLC — from natural-language requirements to merged PRs — with cost protection, session resilience, multi-runtime support, and full observability.
+**Goal:** Build px-dispatch (`px`), a production-grade CLI that orchestrates autonomous AI agents through the full SDLC — from natural-language requirements to merged PRs — with cost protection, session resilience, multi-runtime support, and full observability.
 
 **Architecture:** Event-sourced state (append-only JSONL + SQLite projections), pipeline-stage pattern for post-execution processing, DAG-based wave dispatch, pluggable runtime SDK for AI CLIs (Claude Code, Codex, Gemini), with both TUI and browser-based dashboards.
 
 **Tech Stack:** Go 1.22+, SQLite (WAL mode), Cobra (CLI), Bubbletea (TUI), Alpine.js + Tailwind (web dashboard), slog (structured logging), tmux (session management).
 
-**Spec:** `docs/superpowers/specs/2026-03-20-project-x-v2-architecture-design.md`
+**Spec:** `docs/superpowers/specs/2026-03-20-px-dispatch-v2-architecture-design.md`
 
 ---
 
 ## File Structure
 
 ```
-project-x/
+px-dispatch/
 ├── cmd/px/
 │   └── main.go                       # Entry point, wires Cobra root
 ├── internal/
@@ -192,7 +192,7 @@ Everything depends on this. Produces: a `px` CLI that loads config, runs migrati
 
 ```bash
 cd /Users/mncedimini/Sites/hackathon
-go mod init github.com/tzone85/project-x
+go mod init github.com/tzone85/px-dispatch
 ```
 
 - [ ] **Step 2: Create entry point**
@@ -204,7 +204,7 @@ package main
 import (
 	"os"
 
-	"github.com/tzone85/project-x/internal/cli"
+	"github.com/tzone85/px-dispatch/internal/cli"
 )
 
 func main() {
@@ -234,7 +234,7 @@ var (
 func NewRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "px",
-		Short: "Project X — AI agent orchestration for the full SDLC",
+		Short: "px-dispatch — AI agent orchestration for the full SDLC",
 		Long:  "Orchestrate autonomous AI agents from requirements to merged PRs.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Help()
@@ -267,7 +267,7 @@ Create `Makefile`:
 ```makefile
 BINARY := px
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
-LDFLAGS := -ldflags "-X github.com/tzone85/project-x/internal/cli.version=$(VERSION)"
+LDFLAGS := -ldflags "-X github.com/tzone85/px-dispatch/internal/cli.version=$(VERSION)"
 
 .PHONY: build test lint clean install
 
@@ -1420,7 +1420,7 @@ git push -u origin main
 - [ ] **Step 5: Tag v0.1.0**
 
 ```bash
-git tag -a v0.1.0 -m "Initial release: Project X"
+git tag -a v0.1.0 -m "Initial release: px-dispatch"
 git push origin v0.1.0
 ```
 

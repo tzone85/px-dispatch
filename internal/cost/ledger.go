@@ -78,8 +78,11 @@ func (l *SQLiteLedger) QueryByRequirement(reqID string) (float64, error) {
 }
 
 // QueryByDay returns the total cost in USD for the given date (format: "2006-01-02").
+// `created_at` is stored as UTC; callers pass local-formatted dates (time.Now().Format(...)),
+// so we convert stored timestamps to localtime before comparing to avoid a midnight-boundary
+// off-by-one in non-UTC timezones (e.g. SAST=UTC+2: 00:30 local is still yesterday in UTC).
 func (l *SQLiteLedger) QueryByDay(date string) (float64, error) {
-	return l.sumCost("SELECT COALESCE(SUM(cost_usd), 0) FROM token_usage WHERE date(created_at) = ?", date)
+	return l.sumCost("SELECT COALESCE(SUM(cost_usd), 0) FROM token_usage WHERE date(created_at, 'localtime') = ?", date)
 }
 
 // sumCost executes a query that returns a single float64 value.

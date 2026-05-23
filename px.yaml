@@ -1,7 +1,7 @@
 version: "1"
 
 workspace:
-  state_dir: "/tmp/project-x-pr-smoke"
+  state_dir: "/tmp/px-dispatch-pr-smoke"
   backend: sqlite
   log_level: info
 

@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/tzone85/project-x/internal/agent"
-	"github.com/tzone85/project-x/internal/config"
-	"github.com/tzone85/project-x/internal/git"
-	"github.com/tzone85/project-x/internal/planner"
-	"github.com/tzone85/project-x/internal/runtime"
-	"github.com/tzone85/project-x/internal/state"
+	"github.com/tzone85/px-dispatch/internal/agent"
+	"github.com/tzone85/px-dispatch/internal/config"
+	"github.com/tzone85/px-dispatch/internal/git"
+	"github.com/tzone85/px-dispatch/internal/planner"
+	"github.com/tzone85/px-dispatch/internal/runtime"
+	"github.com/tzone85/px-dispatch/internal/state"
 )
 
 // EventSender is the interface for asynchronous event projection.
@@ -127,12 +127,18 @@ func (e *Executor) spawnOne(
 
 	// Step 4: Build prompts and spawn runtime session.
 	promptCtx := agent.PromptContext{
+		TeamName:           "px-dispatch",
 		StoryID:            a.StoryID,
 		StoryTitle:         story.Title,
 		StoryDescription:   story.Description,
 		AcceptanceCriteria: story.AcceptanceCriteria,
 		RepoPath:           worktreePath,
 		Complexity:         story.Complexity,
+		IsExistingCodebase: detectExistingCodebase(worktreePath),
+		IsBugFix:           classifyIsBugFix(story.Title, story.Description),
+		IsInfrastructure:   classifyIsInfrastructure(story.Title, story.Description, story.OwnedFiles),
+		DesignApproach:     "ddd-tdd", // project-x default — agents follow DDD+TDD unless overridden
+		WaveContext:        e.loadWaveContext(worktreePath),
 	}
 
 	goal := agent.GoalPrompt(a.Role, promptCtx)

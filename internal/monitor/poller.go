@@ -10,11 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tzone85/project-x/internal/git"
-	"github.com/tzone85/project-x/internal/pipeline"
-	"github.com/tzone85/project-x/internal/runtime"
-	"github.com/tzone85/project-x/internal/state"
-	"github.com/tzone85/project-x/internal/tmux"
+	"github.com/tzone85/px-dispatch/internal/git"
+	"github.com/tzone85/px-dispatch/internal/pipeline"
+	"github.com/tzone85/px-dispatch/internal/runtime"
+	"github.com/tzone85/px-dispatch/internal/state"
+	"github.com/tzone85/px-dispatch/internal/tmux"
 )
 
 var pollerIdleRe = regexp.MustCompile(`(?m)^\$\s*$`)
@@ -117,6 +117,17 @@ func (p *Poller) Run(ctx context.Context, agents []ActiveAgent, repoDir string) 
 }
 
 func (p *Poller) pollOnce(ctx context.Context, wg *sync.WaitGroup, active map[string]ActiveAgent, repoDir string) {
+	// Collect mutations during iteration and apply after. Mutating a map
+	// while ranging it produces non-deterministic visits of newly-inserted
+	// keys (e.g. when the fallbacker swaps a session name) — see the
+	// concurrency audit's HIGH finding "pollOnce mutates the active map
+	// while iterating it".
+	type mutation struct {
+		delKey string
+		addKey string
+		addVal ActiveAgent
+	}
+	var mutations []mutation
 	for sessionName, ag := range active {
 		health := tmux.SessionHealth(p.runner, sessionName, "")
 
@@ -126,12 +137,12 @@ func (p *Poller) pollOnce(ctx context.Context, wg *sync.WaitGroup, active map[st
 					"story", ag.Assignment.StoryID,
 					"status", health.Status)
 				p.runPipelineForCompletedAgent(ctx, wg, ag, repoDir)
-				delete(active, sessionName)
+				mutations = append(mutations, mutation{delKey: sessionName})
 				continue
 			}
 			slog.Warn("agent session dead/missing", "story", ag.Assignment.StoryID, "status", health.Status)
 			p.emitAgentEvent(ag, health)
-			delete(active, sessionName)
+			mutations = append(mutations, mutation{delKey: sessionName})
 			continue
 		}
 
@@ -148,7 +159,7 @@ func (p *Poller) pollOnce(ctx context.Context, wg *sync.WaitGroup, active map[st
 			updated, switched, switchErr := p.fallbacker.TrySwitch(ctx, ag, output)
 			if switchErr != nil {
 				slog.Error("runtime fallback failed", "story", ag.Assignment.StoryID, "error", switchErr)
-				delete(active, sessionName)
+				mutations = append(mutations, mutation{delKey: sessionName})
 				continue
 			}
 			if switched {
@@ -156,9 +167,12 @@ func (p *Poller) pollOnce(ctx context.Context, wg *sync.WaitGroup, active map[st
 					p.watchdog.ClearFingerprint(sessionName)
 				}
 				if updated.Assignment.SessionName != sessionName {
-					delete(active, sessionName)
+					mutations = append(mutations, mutation{delKey: sessionName})
 				}
-				active[updated.Assignment.SessionName] = updated
+				mutations = append(mutations, mutation{
+					addKey: updated.Assignment.SessionName,
+					addVal: updated,
+				})
 				continue
 			}
 		}
@@ -172,7 +186,18 @@ func (p *Poller) pollOnce(ctx context.Context, wg *sync.WaitGroup, active map[st
 		if p.watchdog != nil {
 			p.watchdog.ClearFingerprint(sessionName)
 		}
-		delete(active, sessionName)
+		mutations = append(mutations, mutation{delKey: sessionName})
+	}
+
+	// Apply collected mutations after the range loop so newly-inserted keys
+	// don't get non-deterministically re-visited within the same tick.
+	for _, m := range mutations {
+		if m.delKey != "" {
+			delete(active, m.delKey)
+		}
+		if m.addKey != "" {
+			active[m.addKey] = m.addVal
+		}
 	}
 }
 
@@ -189,13 +214,17 @@ func (p *Poller) runPipelineForCompletedAgent(ctx context.Context, wg *sync.Wait
 		defer p.mergeMu.Unlock()
 
 		sc := pipeline.StoryContext{
-			StoryID:      a.Assignment.StoryID,
-			Branch:       a.Assignment.Branch,
-			WorktreePath: a.WorktreePath,
-			RepoDir:      repoDir,
-			AgentID:      a.Assignment.AgentID,
-			RuntimeName:  a.RuntimeName,
-			BaseBranch:   "main",
+			StoryID:            a.Assignment.StoryID,
+			Branch:             a.Assignment.Branch,
+			WorktreePath:       a.WorktreePath,
+			RepoDir:            repoDir,
+			AgentID:            a.Assignment.AgentID,
+			RuntimeName:        a.RuntimeName,
+			BaseBranch:         "main",
+			StoryTitle:         a.Story.Title,
+			StoryDescription:   a.Story.Description,
+			AcceptanceCriteria: a.Story.AcceptanceCriteria,
+			OwnedFiles:         a.Story.OwnedFiles,
 		}
 		result, err := p.pipeline.Run(ctx, sc)
 		if err != nil {

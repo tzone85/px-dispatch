@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/tzone85/project-x/internal/agent"
-	"github.com/tzone85/project-x/internal/config"
-	"github.com/tzone85/project-x/internal/git"
-	"github.com/tzone85/project-x/internal/tmux"
+	"github.com/tzone85/px-dispatch/internal/agent"
+	"github.com/tzone85/px-dispatch/internal/config"
+	"github.com/tzone85/px-dispatch/internal/git"
+	"github.com/tzone85/px-dispatch/internal/tmux"
 )
 
 // Router selects the best runtime for a given agent role based on

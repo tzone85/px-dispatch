@@ -1,4 +1,4 @@
-# Contributing to Project X
+# Contributing to px-dispatch
 
 ## Development Setup
 

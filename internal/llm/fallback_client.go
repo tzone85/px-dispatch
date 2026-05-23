@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/tzone85/project-x/internal/config"
-	"github.com/tzone85/project-x/internal/modelswitch"
+	"github.com/tzone85/px-dispatch/internal/config"
+	"github.com/tzone85/px-dispatch/internal/modelswitch"
 )
 
 // FallbackClient keeps Claude as the primary client but can fail over to

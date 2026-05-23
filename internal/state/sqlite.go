@@ -91,11 +91,55 @@ func (s *SQLiteStore) Project(evt Event) error {
 		return s.updateStoryStatus(evt.StoryID, "merged")
 	case EventAgentSpawned:
 		return s.projectAgentSpawned(evt)
+	case EventAgentStuck:
+		return s.updateAgentStatusByPayload(evt, "stuck")
+	case EventAgentDied:
+		return s.updateAgentStatusByPayload(evt, "dead")
+	case EventAgentStale:
+		return s.updateAgentStatusByPayload(evt, "stale")
+	case EventAgentLost:
+		return s.updateAgentStatusByPayload(evt, "lost")
+	case EventStoryReviewRequested:
+		return s.updateStoryStatus(evt.StoryID, "review")
+	case EventStoryQAStarted:
+		return s.updateStoryStatus(evt.StoryID, "qa")
+	case EventStoryEstimated, EventStoryProgress:
+		// Read-only metadata events — no projection update needed but they
+		// are explicitly enumerated here so the wiring test can confirm
+		// every declared EventType has a known disposition.
+		return nil
+	case EventBudgetWarning, EventBudgetExhausted:
+		// Cost-side events; projected via the cost ledger, not the
+		// projection store. Enumerated so wiring stays exhaustive.
+		return nil
 	case EventEscalationCreated:
 		return s.projectEscalationCreated(evt)
 	default:
 		return nil
 	}
+}
+
+// updateAgentStatusByPayload sets the agents row's status when an agent
+// lifecycle event fires (stuck/dead/stale/lost). The payload may carry the
+// agent id under either `agent_id` (when emitted by the poller) or as the
+// event's outer AgentID (when emitted by the executor). We accept either.
+func (s *SQLiteStore) updateAgentStatusByPayload(evt Event, status string) error {
+	agentID := evt.AgentID
+	if agentID == "" {
+		var p struct {
+			AgentID string `json:"agent_id"`
+		}
+		_ = json.Unmarshal(evt.Payload, &p)
+		agentID = p.AgentID
+	}
+	if agentID == "" {
+		return nil
+	}
+	_, err := s.db.Exec(
+		`UPDATE agents SET status = ? WHERE id = ?`,
+		status, agentID,
+	)
+	return err
 }
 
 // --- Requirement projections ---

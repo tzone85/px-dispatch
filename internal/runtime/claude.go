@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/tzone85/project-x/internal/git"
-	"github.com/tzone85/project-x/internal/tmux"
+	"github.com/tzone85/px-dispatch/internal/git"
+	"github.com/tzone85/px-dispatch/internal/tmux"
 )
 
 // Detection patterns for Claude Code output.
@@ -142,8 +142,12 @@ func (c *ClaudeCodeRuntime) buildCommand(cfg SessionConfig) string {
 		cmd = cmd + " | tee " + shellQuote(cfg.LogFile)
 	}
 
-	// Use a heredoc to pipe the goal into stdin.
-	// The PX_EOF delimiter is unlikely to appear in prompts.
+	// Use a heredoc to pipe the goal into stdin. The delimiter is a random
+	// 16-byte hex string per spawn so a malicious requirement (LLM-controlled
+	// `cfg.Goal`) cannot smuggle in a literal `PX_EOF` line that would close
+	// the heredoc early and let subsequent text be executed as shell. See
+	// security finding C1.
+	//
 	// `.px-done` is a filesystem sentinel the monitor poller checks on every
 	// cycle. Touch it UNCONDITIONALLY after claude exits so the pipeline can
 	// advance; pipeline stages (diffcheck, qa) decide success/failure based on
@@ -153,8 +157,9 @@ func (c *ClaudeCodeRuntime) buildCommand(cfg SessionConfig) string {
 	// NOTE: use `rc=$?` not `status=$?`. In zsh (macOS default-shell for tmux)
 	// `status` is a read-only built-in alias for `$?`; assigning to it aborts
 	// the script before the sentinel can be touched.
+	delim := randomHeredocDelimiter()
 	return "rm -f .px-done\n" +
-		"cat <<'PX_EOF' | " + cmd + "\n" + cfg.Goal + "\nPX_EOF\n" +
+		"cat <<'" + delim + "' | " + cmd + "\n" + sanitizeHeredocBody(cfg.Goal, delim) + "\n" + delim + "\n" +
 		"rc=$?\n" +
 		"printf '$\\n'\n" +
 		"touch .px-done\n" +

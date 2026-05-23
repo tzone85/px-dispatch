@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tzone85/project-x/internal/modelswitch"
+	"github.com/tzone85/px-dispatch/internal/modelswitch"
 )
 
 func TestNewCLIModelSwitchApprover_InitMap(t *testing.T) {
