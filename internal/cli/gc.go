@@ -114,8 +114,14 @@ func isActiveWorktree(name string, activeReqIDs map[string]bool) bool {
 
 // gcStaleBranches deletes px/* branches that no longer have a corresponding
 // worktree on disk. Best-effort.
+//
+// repoDir lookup: prefer the active requirement's RepoPath (queried from the
+// projection store); fall back to the parent of the state dir or to
+// os.Getwd as a last resort. Running `px gc` from inside a worktree used to
+// silently no-op because the worktree's .git points at the worktree-specific
+// gitdir, not the canonical repo (code-quality finding #6).
 func gcStaleBranches(worktreesDir string) int {
-	repoDir, _ := os.Getwd()
+	repoDir := resolveRepoDir()
 	if repoDir == "" {
 		return 0
 	}

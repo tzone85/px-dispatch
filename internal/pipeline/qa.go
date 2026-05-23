@@ -48,7 +48,13 @@ func (s *QAStage) Execute(_ context.Context, sc StoryContext) (StageResult, erro
 
 	for _, cmd := range commands {
 		if _, err := s.runner.Run(sc.WorktreePath, cmd.name, cmd.args...); err != nil {
-			if isNoTestsError(err) {
+			if specRequiresTests(sc) {
+				// If the story's acceptance criteria explicitly require tests,
+				// we never tolerate a "no tests" message — that IS the
+				// failure mode the spec is describing.
+				return StageFailed, fmt.Errorf("%s %s: %w", cmd.name, strings.Join(cmd.args, " "), err)
+			}
+			if isNoTestsError(cmd.name, err) {
 				continue
 			}
 			return StageFailed, fmt.Errorf("%s %s: %w", cmd.name, strings.Join(cmd.args, " "), err)
@@ -58,23 +64,56 @@ func (s *QAStage) Execute(_ context.Context, sc StoryContext) (StageResult, erro
 	return StagePassed, nil
 }
 
+// specRequiresTests inspects the story's acceptance criteria for explicit
+// test demands. If the spec calls for tests, the QA stage must NOT swallow
+// "no test files" messages — those are real failures (per code-quality
+// audit finding #1). Today's heuristic matches common phrasing in our
+// requirements; tighten as more cases surface.
+func specRequiresTests(sc StoryContext) bool {
+	hay := strings.ToLower(sc.AcceptanceCriteria + " " + sc.StoryDescription)
+	for _, marker := range []string{
+		"test passes", "tests pass", "unit test", "table-driven test",
+		"coverage ≥", "coverage >=", "npm test", "go test", "pytest",
+		"tdd", "written first",
+	} {
+		if strings.Contains(hay, marker) {
+			return true
+		}
+	}
+	return false
+}
+
 // isNoTestsError reports whether the error from a test command means
-// "no test files found yet" rather than a real failure. Recognised today:
-//   - vitest:  "No test files found, exiting with code 1"
-//   - jest:    "No tests found"
-//   - pytest:  "no tests ran in"
-//   - go test: "[no test files]"
-func isNoTestsError(err error) bool {
+// "no test files found yet" rather than a real failure. Scoped per-runner to
+// avoid masking a jest/vitest exit-1 with a coincidental substring from
+// another runner (code-quality audit finding #1).
+//
+// Note: `go test ./...` returns exit code 0 when packages have no test files
+// (it prints `[no test files]` to stdout) — so it never reaches this branch.
+// That marker has been removed from the matcher.
+func isNoTestsError(runnerName string, err error) bool {
 	if err == nil {
 		return false
 	}
 	msg := err.Error()
-	for _, marker := range []string{
-		"No test files found",
-		"No tests found",
-		"no tests ran",
-		"[no test files]",
-	} {
+	var markers []string
+	switch runnerName {
+	case "npm", "node", "yarn", "pnpm":
+		// vitest / jest / mocha — each phrasing.
+		markers = []string{
+			"No test files found",       // vitest
+			"No tests found",            // jest
+			"No tests found matching",   // vitest glob miss
+			"0 passing",                 // mocha when nothing matches
+		}
+	case "pytest", "python", "python3":
+		markers = []string{
+			"no tests ran",
+			"no tests collected",
+			"collected 0 items",
+		}
+	}
+	for _, marker := range markers {
 		if strings.Contains(msg, marker) {
 			return true
 		}

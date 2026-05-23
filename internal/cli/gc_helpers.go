@@ -1,9 +1,46 @@
 package cli
 
 import (
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
+
+	"github.com/tzone85/px-dispatch/internal/state"
 )
+
+// resolveRepoDir picks the best candidate for the canonical repo directory:
+//   1. the RepoPath of any non-archived requirement,
+//   2. the parent of app.stateDir/worktrees (works when state lives under
+//      <repo>/.px),
+//   3. os.Getwd() as a last resort.
+// Returns the empty string if none of these resolves to a real directory.
+func resolveRepoDir() string {
+	if app.projStore != nil {
+		reqs, err := app.projStore.ListRequirements(state.ReqFilter{ExcludeArchived: true})
+		if err == nil {
+			for _, r := range reqs {
+				if r.RepoPath != "" {
+					if info, err := os.Stat(r.RepoPath); err == nil && info.IsDir() {
+						return r.RepoPath
+					}
+				}
+			}
+		}
+	}
+	if app.stateDir != "" {
+		candidate := filepath.Dir(app.stateDir)
+		if info, err := os.Stat(filepath.Join(candidate, ".git")); err == nil {
+			_ = info
+			return candidate
+		}
+	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+	return cwd
+}
 
 // listLocalPxBranches returns every local branch whose name starts with "px/".
 func listLocalPxBranches(repoDir string) ([]string, error) {

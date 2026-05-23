@@ -31,15 +31,28 @@ func (p *Projector) Start() {
 	go p.run()
 }
 
-// Send enqueues an event for async projection. Non-blocking if buffer has space.
-// Drops the event silently if the projector has been shut down.
+// Send enqueues an event for async projection. Non-blocking — drops events
+// when the buffer is full to avoid the deadlock that occurred when Shutdown
+// raced with a blocking send (Send held the lock waiting for buffer space
+// while Shutdown waited for the lock to mark the projector closed).
+//
+// Drops are logged so saturation isn't silent. If buffer pressure is real,
+// raise the bufSize argument to NewProjector — but the projector is a
+// best-effort dashboard projection, not the source of truth (events.jsonl
+// is), so dropping here is recoverable.
 func (p *Projector) Send(evt Event) {
 	p.mu.Lock()
-	defer p.mu.Unlock()
-	if p.closed {
+	closed := p.closed
+	p.mu.Unlock()
+	if closed {
 		return
 	}
-	p.ch <- evt
+	select {
+	case p.ch <- evt:
+	default:
+		slog.Warn("projector buffer full; event projection skipped",
+			"event_type", evt.Type, "event_id", evt.ID)
+	}
 }
 
 // Shutdown drains the channel fully, then stops the goroutine.

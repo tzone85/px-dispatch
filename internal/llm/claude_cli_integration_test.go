@@ -244,23 +244,38 @@ func TestBuildCLIPrompt_OmitsAssistantMessages(t *testing.T) {
 	}
 }
 
-func TestBuildStrippedEnv_RemovesAnthropicKey(t *testing.T) {
-	t.Setenv("ANTHROPIC_API_KEY", "sk-secret")
-	t.Setenv("OTHER_VAR", "keep-me")
+func TestBuildStrippedEnv_AllowlistDropsSecrets(t *testing.T) {
+	// Allowlist enforced after security audit H2: only the documented set of
+	// safe vars survives; every secret-bearing variable gets stripped even
+	// when present in the operator's shell environment.
+	t.Setenv("ANTHROPIC_API_KEY", "sk-anthropic")
+	t.Setenv("OPENAI_API_KEY", "sk-openai")
+	t.Setenv("GITHUB_TOKEN", "ghp_xxx")
+	t.Setenv("GEMINI_API_KEY", "ai-gemini")
+	t.Setenv("FIRECRAWL_API_KEY", "fc-x")
+	t.Setenv("PATH", "/usr/bin:/bin")
+
 	env := buildStrippedEnv()
 	for _, e := range env {
-		if strings.HasPrefix(e, "ANTHROPIC_API_KEY=") {
-			t.Errorf("ANTHROPIC_API_KEY should be stripped, got %q", e)
+		for _, secret := range []string{
+			"ANTHROPIC_API_KEY=", "OPENAI_API_KEY=", "GITHUB_TOKEN=",
+			"GEMINI_API_KEY=", "FIRECRAWL_API_KEY=",
+		} {
+			if strings.HasPrefix(e, secret) {
+				t.Errorf("%s should be stripped, got %q", secret, e)
+			}
 		}
 	}
-	hasOther := false
+
+	hasPath := false
 	for _, e := range env {
-		if e == "OTHER_VAR=keep-me" {
-			hasOther = true
+		if strings.HasPrefix(e, "PATH=") {
+			hasPath = true
+			break
 		}
 	}
-	if !hasOther {
-		t.Error("OTHER_VAR should be preserved")
+	if !hasPath {
+		t.Error("PATH should be preserved (it's on the allowlist)")
 	}
 }
 

@@ -58,6 +58,36 @@ func (s *RebaseStage) Execute(ctx context.Context, sc StoryContext) (StageResult
 	return s.resolveConflicts(ctx, sc)
 }
 
+// validateWorktreePath rejects paths that would escape the worktree root.
+// Security finding C2 (rebase path traversal): the conflicted file list comes
+// from `git diff --name-only --diff-filter=U` which is influenced by what was
+// committed on the branch — if a malicious commit added a tracked file at
+// `../../../etc/cron.d/backdoor`, an unvalidated `cat` / `tee` on that path
+// would land outside the worktree. We enforce: not absolute, no parent-dir
+// traversal that escapes, resolved path remains under the worktree.
+func validateWorktreePath(worktreeRoot, file string) error {
+	if file == "" {
+		return fmt.Errorf("empty path")
+	}
+	if filepath.IsAbs(file) {
+		return fmt.Errorf("absolute path not allowed")
+	}
+	cleaned := filepath.Clean(filepath.Join(worktreeRoot, file))
+	rootAbs, err := filepath.Abs(worktreeRoot)
+	if err != nil {
+		return fmt.Errorf("resolve worktree: %w", err)
+	}
+	cleanedAbs, err := filepath.Abs(cleaned)
+	if err != nil {
+		return fmt.Errorf("resolve target: %w", err)
+	}
+	rel, err := filepath.Rel(rootAbs, cleanedAbs)
+	if err != nil || strings.HasPrefix(rel, "..") || rel == ".." {
+		return fmt.Errorf("path escapes worktree")
+	}
+	return nil
+}
+
 // abortStaleRebase checks the worktree's `.git` metadata for an in-progress
 // rebase and aborts it if found. Uses os.Stat rather than the command runner
 // so the preflight cost is one syscall and doesn't perturb mock-runner test
@@ -71,10 +101,38 @@ func (s *RebaseStage) abortStaleRebase(sc StoryContext) {
 	// repo's .git/worktrees/<name>/. Resolve it first.
 	if info, err := os.Stat(gitDir); err == nil && !info.IsDir() {
 		if data, err := os.ReadFile(gitDir); err == nil {
-			line := strings.TrimSpace(strings.TrimPrefix(string(data), "gitdir:"))
-			if line != "" {
-				gitDir = strings.TrimSpace(line)
+			raw := strings.TrimSpace(string(data))
+			after, ok := strings.CutPrefix(raw, "gitdir:")
+			if !ok {
+				return
 			}
+			resolved := strings.TrimSpace(after)
+			if resolved == "" {
+				return
+			}
+			// Git permits relative gitdir paths; resolve against the
+			// worktree.
+			if !filepath.IsAbs(resolved) {
+				resolved = filepath.Join(sc.WorktreePath, resolved)
+			}
+			// Validate the resolved gitdir stays under either the worktree
+			// or the repo's .git/worktrees/. Without this, an attacker who
+			// can plant a `.git` file in the worktree could point us at
+			// arbitrary filesystem locations (security finding H1).
+			cleaned, err := filepath.Abs(filepath.Clean(resolved))
+			if err != nil {
+				return
+			}
+			worktreeAbs, _ := filepath.Abs(sc.WorktreePath)
+			repoAbs, _ := filepath.Abs(sc.RepoDir)
+			underWorktree := strings.HasPrefix(cleaned+string(filepath.Separator), worktreeAbs+string(filepath.Separator))
+			underRepo := repoAbs != "" && strings.HasPrefix(cleaned+string(filepath.Separator), repoAbs+string(filepath.Separator))
+			if !underWorktree && !underRepo {
+				slog.Warn("ignoring suspicious .git gitdir target",
+					"story", sc.StoryID, "gitdir", resolved)
+				return
+			}
+			gitDir = cleaned
 		}
 	}
 	for _, marker := range []string{"rebase-merge", "rebase-apply"} {
@@ -116,6 +174,9 @@ func (s *RebaseStage) resolveOneRound(ctx context.Context, sc StoryContext) (Sta
 	}
 
 	for _, file := range parseFileList(conflicted) {
+		if err := validateWorktreePath(sc.WorktreePath, file); err != nil {
+			return StageFatal, fmt.Errorf("refusing to resolve conflict on %q: %w", file, err)
+		}
 		if err := s.resolveFile(ctx, sc, file); err != nil {
 			return StageFailed, err
 		}
