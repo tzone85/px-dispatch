@@ -83,3 +83,19 @@ project-x/
 - For the canonical spec (PR-shaped, GitHub-rendered): [`docs/superpowers/specs/2026-05-22-architecture-reference.md`](../superpowers/specs/2026-05-22-architecture-reference.md).
 - For the onboarding spec: [`docs/superpowers/specs/2026-05-22-onboarding.md`](../superpowers/specs/2026-05-22-onboarding.md).
 - For shared learnings across sibling projects: `~/Sites/misc/SHARED_LEARNINGS.md`.
+
+## Keeping the vault fresh
+
+The canonical copy of every note lives in this repo under
+`docs/obsidian/`. Mirror it into your iCloud Obsidian vault with:
+
+```bash
+make sync-vault     # one-shot
+make watch-vault    # continuous (needs `brew install fswatch`)
+```
+
+The default destination is
+`~/Library/Mobile Documents/iCloud~md~obsidian/Documents/px-dispatch/`.
+Override with `PX_DISPATCH_VAULT=/custom/path make sync-vault`.
+**Vault edits get overwritten** — make changes in the repo, push, and the
+next sync propagates them.
